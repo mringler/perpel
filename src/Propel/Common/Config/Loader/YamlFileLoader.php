@@ -34,6 +34,10 @@ class YamlFileLoader extends FileLoader
     {
         $path = $this->locator->locate($resource);
 
+        if (is_array($path)) {
+            throw new InputOutputException(sprintf('Ambigous file name: `%s`.', $resource));
+        }
+
         if (!is_readable($path)) {
             throw new InputOutputException(sprintf("You don't have permissions to access configuration file `%s`.", $resource));
         }
