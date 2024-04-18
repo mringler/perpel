@@ -14,6 +14,7 @@ namespace Propel\Runtime\ActiveRecord;
  * @author jaugustin
  *
  * @method array toArray(string $keyType = \Propel\Runtime\Map\TableMap::TYPE_FIELDNAME, bool $includeLazyLoadColumns = true, array $alreadyDumpedObjects = [], bool $includeForeignObjects = false): array
+ * @method array toOutputGroup($outputGroup, string $keyType = \Propel\Runtime\Map\TableMap::TYPE_FIELDNAME, array $alreadyDumpedObjects = []): array
  */
 interface ActiveRecordInterface
 {

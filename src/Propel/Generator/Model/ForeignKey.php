@@ -131,6 +131,16 @@ class ForeignKey extends MappingModel
     private $autoNaming = false;
 
     /**
+     * @var array<string>
+     */
+    protected $localOutputGroupNames = [];
+
+    /**
+     * @var array<string>
+     */
+    protected $refOutputGroupNames = [];
+
+    /**
      * Constructs a new ForeignKey object.
      *
      * @param string|null $name
@@ -161,6 +171,9 @@ class ForeignKey extends MappingModel
         $this->onUpdate = $this->normalizeFKey($this->getAttribute('onUpdate'));
         $this->onDelete = $this->normalizeFKey($this->getAttribute('onDelete'));
         $this->skipSql = $this->booleanValue($this->getAttribute('skipSql'));
+
+        $this->localOutputGroupNames = $this->getDefaultValueForSet($this->getAttribute('outputGroup', '')) ?? [];
+        $this->refOutputGroupNames = $this->getDefaultValueForSet($this->getAttribute('refOutputGroup', '')) ?? [];
     }
 
     /**
@@ -1127,5 +1140,41 @@ class ForeignKey extends MappingModel
         $cols = $this->getLocalPrimaryKeys();
 
         return count($cols) !== 0;
+    }
+
+    /**
+     * @param array<string> $outputGroupNames
+     *
+     * @return void
+     */
+    public function setLocalOutputGroupNames(array $outputGroupNames)
+    {
+        $this->localOutputGroupNames = $outputGroupNames;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getLocalOutputGroupNames(): array
+    {
+        return $this->localOutputGroupNames;
+    }
+
+    /**
+     * @param array<string> $outputGroupNames
+     *
+     * @return void
+     */
+    public function setRefOutputGroupNames(array $outputGroupNames)
+    {
+        $this->refOutputGroupNames = $outputGroupNames;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getRefOutputGroupNames(): array
+    {
+        return $this->refOutputGroupNames;
     }
 }

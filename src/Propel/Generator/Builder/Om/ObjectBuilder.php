@@ -371,6 +371,7 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
             $this->addGetByName($script);
             $this->addGetByPosition($script);
             $this->addToArray($script);
+            $this->addToOutputGroup($script);
         }
 
         if ($this->isAddGenericMutators()) {
@@ -3104,6 +3105,86 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
     }
 
  // addToArray()
+
+
+    /**
+     * @param string $script
+     *
+     * @return void
+     */
+    protected function addToOutputGroup(string &$script): void
+    {
+        $script .= $this->renderTemplate('baseObjectToOutputGroup', [
+            'tableMapClassName' => $this->getTableMapClassName(),
+            'objectClassName' => $this->getUnqualifiedClassName(),
+            'defaultKeyType' => $this->getDefaultKeyType(),
+            'temporalColumnIndexesByFormatter' => $this->getTemporalColumnIndexesByFormatter(),
+            'relationFormatterData' => $this->buildRelationFormatterData(),
+        ]);
+    }
+
+    /**
+     * Build a map with date format strings (i.e. 'Y-m-d') as keys and the
+     * indexes of associated column indexes as values.
+     *
+     * @return array<array<int>>
+     */
+    protected function getTemporalColumnIndexesByFormatter(): array
+    {
+        $temporalColumnIndexesByFormatter = [];
+        foreach ($this->getTable()->getColumns() as $num => $col) {
+            if (!$col->isTemporalType()) {
+                continue;
+            }
+            $formatter = $this->getTemporalFormatter($col);
+            $temporalColumnIndexesByFormatter[$formatter][] = $num;
+        }
+
+        return $temporalColumnIndexesByFormatter;
+    }
+
+    /**
+     * Get relation data as used in output group template.
+     *
+     * @return array<array{
+     *  'localVariableName': string,
+     *  'relationName': string,
+     *  'targetKeyLookupStatement': string,
+     *  'isCollection': bool
+     * }>
+     */
+    protected function buildRelationFormatterData(): array
+    {
+        $result = [];
+
+        $fks = $this->getTable()->getForeignKeys();
+        foreach ($fks as $fk) {
+            $lookup = $this->addToArrayKeyLookUp($fk->getPhpName(), $fk->getForeignTable(), false);
+            $result[] = [
+                'localVariableName' => $this->getFKVarName($fk),
+                'relationName' => $this->getFKPhpNameAffix($fk),
+                'targetKeyLookupStatement' => $lookup,
+                'isCollection' => false,
+            ];
+        }
+
+        $refs = $this->getTable()->getReferrers();
+        foreach ($refs as $ref) {
+            $isLocal = $ref->isLocalPrimaryKey();
+            $localVariableName = ($isLocal) ? $this->getPKRefFKVarName($ref) : $this->getRefFKCollVarName($ref);
+            $lookup = $this->addToArrayKeyLookUp($ref->getRefPhpName(), $ref->getTable(), !$isLocal);
+            /** @var string $relationName */
+            $relationName = $this->getRefFKPhpNameAffix($ref);
+            $result[] = [
+                'localVariableName' => $localVariableName,
+                'relationName' => $relationName,
+                'targetKeyLookupStatement' => $lookup,
+                'isCollection' => !$isLocal,
+            ];
+        }
+
+        return $result;
+    }
 
     /**
      * Adds the switch-statement for looking up the array-key name for toArray

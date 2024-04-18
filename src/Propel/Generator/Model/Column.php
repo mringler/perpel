@@ -223,6 +223,11 @@ class Column extends MappingModel
     protected $valueSet = [];
 
     /**
+     * @var array<string>
+     */
+    protected $outputGroupNames = [];
+
+    /**
      * Creates a new column and set the name.
      *
      * @param string $name The column's name
@@ -336,6 +341,8 @@ class Column extends MappingModel
             // AutoIncrement/Sequences
             $this->isAutoIncrement = $this->booleanValue($this->getAttribute('autoIncrement'));
             $this->isLazyLoad = $this->booleanValue($this->getAttribute('lazyLoad'));
+
+            $this->outputGroupNames = $this->getDefaultValueForSet($this->getAttribute('outputGroup', '')) ?? [];
 
             // Add type, size information to associated Domain object
             $domain->replaceSqlType($this->getAttribute('sqlType'));
@@ -1684,6 +1691,24 @@ class Column extends MappingModel
         }
 
         return $this->parentTable->getPlatform() ? true : false;
+    }
+
+    /**
+     * @param array<string> $outputGroupNames
+     *
+     * @return void
+     */
+    public function setOutputGroupNames(array $outputGroupNames)
+    {
+        $this->outputGroupNames = $outputGroupNames;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getOutputGroupNames(): array
+    {
+        return $this->outputGroupNames;
     }
 
     /**

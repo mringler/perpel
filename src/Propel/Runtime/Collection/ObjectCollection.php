@@ -211,6 +211,40 @@ class ObjectCollection extends Collection
     }
 
     /**
+     * Turn collection objects into arrays with values specified by output group.
+     *
+     * @param array<string, string>|string $outputGroup Name of the output group used for all tables or
+     *                                                  an array mapping model classes to output group name.
+     *                                                  If a model class does not have a definition for the
+     *                                                  given output group, the whole data is returned.
+     * @param string|null $keyColumn (optional) Column name to use as index.
+     * @param string $keyType (optional) One of the class type constants TableMap::TYPE_PHPNAME,
+     *                                        TableMap::TYPE_CAMELNAME, TableMap::TYPE_COLNAME, TableMap::TYPE_FIELDNAME,
+     *                                        TableMap::TYPE_NUM. Defaults to TableMap::TYPE_PHPNAME.
+     * @param array $alreadyDumpedObjects Internally used on recursion, typically not set by user (List of
+     *                                      objects to skip to avoid recursion).
+     *
+     * @return array
+     */
+    public function toOutputGroup(
+        $outputGroup,
+        ?string $keyColumn = null,
+        string $keyType = TableMap::TYPE_PHPNAME,
+        array $alreadyDumpedObjects = []
+    ): array {
+        $ret = [];
+        $keyGetterMethod = 'get' . $keyColumn;
+
+        /** @var \Propel\Runtime\ActiveRecord\ActiveRecordInterface $obj */
+        foreach ($this->data as $key => $obj) {
+            $key = (!$keyColumn) ? $key : $obj->$keyGetterMethod();
+            $ret[$key] = $obj->toOutputGroup($outputGroup, $keyType, $alreadyDumpedObjects);
+        }
+
+        return $ret;
+    }
+
+    /**
      * Get an array representation of the collection
      *
      * @param string|null $keyColumn If null, the returned array uses an incremental index.

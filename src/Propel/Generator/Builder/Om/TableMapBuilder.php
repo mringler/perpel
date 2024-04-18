@@ -176,6 +176,8 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
         $this->addDoDeleteAll($script);
 
         $this->addDoInsert($script);
+
+        $script .= $this->addColumnOutputGroups();
     }
 
     /**
@@ -1595,5 +1597,62 @@ class " . $this->getUnqualifiedClassName() . " extends TableMap
         });
     }
 ";
+    }
+
+    /**
+     * Adds column output groups data.
+     *
+     * @return string
+     */
+    protected function addColumnOutputGroups(): string
+    {
+        $outputGroups = [];
+        $this->collectColumnIndexesByOutputGroup($outputGroups);
+        $this->collectForeignKeysByOutputGroup($outputGroups);
+        ksort($outputGroups);
+
+        return $this->renderTemplate('tableMapOutputGroups', [
+            'columnIndexesByOutputGroup' => $outputGroups,
+        ]);
+    }
+
+    /**
+     * @param array<array{'column_index'?: array<int>, 'relation'?: array<int>}> $outputGroups
+     *
+     * @return void
+     */
+    protected function collectColumnIndexesByOutputGroup(array &$outputGroups)
+    {
+        foreach ($this->getTable()->getColumns() as $columnIndex => $column) {
+            $groupNames = $column->getOutputGroupNames();
+            foreach ($groupNames as $groupName) {
+                $outputGroups[$groupName]['column_index'][] = $columnIndex;
+            }
+        }
+    }
+
+    /**
+     * @param array<array{'column_index'?: array<int>, 'relation'?: array<int>}> $outputGroups
+     *
+     * @return void
+     */
+    protected function collectForeignKeysByOutputGroup(array &$outputGroups)
+    {
+        $table = $this->getTable();
+
+        foreach ($table->getForeignKeys() as $fk) {
+            $groupNames = $fk->getLocalOutputGroupNames();
+            $fkName = $this->getFKPhpNameAffix($fk);
+            foreach ($groupNames as $groupName) {
+                $outputGroups[$groupName]['relation'][] = $fkName;
+            }
+        }
+        foreach ($table->getReferrers() as $ref) {
+            $groupNames = $ref->getRefOutputGroupNames();
+            $refName = $this->getRefFKPhpNameAffix($ref);
+            foreach ($groupNames as $groupName) {
+                $outputGroups[$groupName]['relation'][] = $refName;
+            }
+        }
     }
 }

@@ -41,6 +41,18 @@ class TableMapBuilderTest extends BookstoreTestBase
         $this->databaseMap = Propel::getServiceContainer()->getDatabaseMap('bookstore');
     }
 
+    protected function buildTableMapBuilderForSchema(string $databaseXml, string $tableName): TableMapBuilder
+    {
+        $reader = new SchemaReader();
+        $schema = $reader->parseString($databaseXml);
+        $table = $schema->getDatabase()->getTable($tableName);
+
+        $tableMapBuilder = new TableMapBuilder($table);
+        $tableMapBuilder->setGeneratorConfig(new QuickGeneratorConfig());
+
+        return $tableMapBuilder;
+    }
+
     /**
      * @return void
      */
@@ -379,21 +391,9 @@ class TableMapBuilderTest extends BookstoreTestBase
     </table>
 </database>
 ';
-        $reader = new SchemaReader();
-        $schema = $reader->parseString($databaseXml);
-        $table = $schema->getDatabase()->getTable('email');
-
-        $tableMapBuilder = new class ($table) extends TableMapBuilder {
-            public function getNormalizedColumnNameMapDefinition(): string
-            {
-                $script = '';
-                $this->addNormalizedColumnNameMap($script);
-
-                return $script;
-            }
-        };
-        $tableMapBuilder->setGeneratorConfig(new QuickGeneratorConfig());
-        $normalizedColumnMapDefinition = $tableMapBuilder->getNormalizedColumnNameMapDefinition();
+        $tableMapBuilder = $this->buildTableMapBuilderForSchema($databaseXml, 'email');
+        $normalizedColumnMapDefinition = '';
+        $this->callMethod($tableMapBuilder, 'addNormalizedColumnNameMap', [&$normalizedColumnMapDefinition]);
 
         // extract inner part of the array
         $this->assertEquals(1, preg_match('/= \[\n(.*)\n\s*\]/ms', $normalizedColumnMapDefinition, $matches));
@@ -512,5 +512,81 @@ XML;
             false
         );
         $this->assertInstanceOf('\\ExampleNamespace\\Greens\\GreenThing', new $greenClass());
+    }
+
+    /**
+     * @return void
+     */
+    public function testCollectColumnIndexesByOutputGroup()
+    {
+        $databaseXml = '
+        <database>
+            <table name="table">
+                <column name="col0" type="integer" />
+                <column name="col1" type="integer" outputGroup="group2"/>
+                <column name="col2" type="integer" outputGroup="group1"/>
+                <column name="col3" type="integer" outputGroup="group1,group2"/>
+            </table>
+        </database>
+        ';
+
+        $tableMapBuilder = $this->buildTableMapBuilderForSchema($databaseXml, 'table');
+        $outputColumns = [];
+        $this->callMethod($tableMapBuilder, 'collectColumnIndexesByOutputGroup', [&$outputColumns]);
+
+        $expected = [
+            'group1' => ['column_index' => [2,3]],
+            'group2' => ['column_index' => [1,3]],
+        ];
+        
+        $this->assertEquals($expected, $outputColumns);
+    }
+
+
+
+    /**
+     * @return void
+     */
+    public function testCollectForeignKeysByOutputGroup()
+    {
+        $databaseXml = '
+<database>
+    <table name="local_table">
+        <column name="col0" type="integer" />
+        <column name="col1" type="integer" />
+        <column name="col2" type="integer" />
+        <column name="col3" type="integer" />
+        <foreign-key foreignTable="foreign_table" phpName="LocalFk0" outputGroup="group1">
+            <reference local="col0" foreign="ft_col0"/>
+        </foreign-key>
+        <foreign-key foreignTable="foreign_table" phpName="LocalFk1" outputGroup="group1,group2">
+            <reference local="col1" foreign="ft_col1"/>
+        </foreign-key>
+    </table>
+    <table name="foreign_table">
+        <column name="ft_col0" type="integer" />
+        <column name="ft_col1" type="integer" />
+        <column name="ft_col2" type="integer" />
+        <column name="ft_col3" type="integer" />
+
+        <foreign-key foreignTable="local_table" phpName="RefFk2" refOutputGroup="group1">
+            <reference local="ft_col2" foreign="col2"/>
+        </foreign-key>
+        <foreign-key foreignTable="local_table" phpName="RefFk3" refOutputGroup="group1,group2">
+            <reference local="ft_col3" foreign="col3"/>
+        </foreign-key>
+    </table>
+</database>
+';
+        $tableMapBuilder = $this->buildTableMapBuilderForSchema($databaseXml, 'local_table');
+        $outputColumns = [];
+        $this->callMethod($tableMapBuilder, 'collectForeignKeysByOutputGroup', [&$outputColumns]);
+
+        $expected = [
+            'group1' => ['relation' => ['LocalFk0', 'LocalFk1', 'ForeignTableRelatedByFtCol2', 'ForeignTableRelatedByFtCol3']],
+            'group2' => ['relation' => ['LocalFk1', 'ForeignTableRelatedByFtCol3']],
+        ];
+        
+        $this->assertEquals($expected, $outputColumns);
     }
 }

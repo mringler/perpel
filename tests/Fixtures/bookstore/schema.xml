@@ -150,14 +150,14 @@
     <!-- test self-referencing foreign keys and inheritance-->
     <table name="bookstore_employee"
         description="Hierarchical table to represent employees of a bookstore.">
-        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true" description="Employee ID number"/>
+        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true" description="Employee ID number" outputGroup="short"/>
         <column name="class_key" type="INTEGER" required="true" default="0" inheritance="single">
             <inheritance key="0" class="BookstoreEmployee"/>
             <inheritance key="1" class="BookstoreManager" extends="BookstoreEmployee"/>
             <inheritance key="2" class="BookstoreCashier" extends="BookstoreEmployee"/>
             <inheritance key="3" class="BookstoreHead" extends="BookstoreManager"/>
         </column>
-        <column name="name" type="VARCHAR" size="32" description="Employee name"/>
+        <column name="name" type="VARCHAR" size="32" description="Employee name" outputGroup="short"/>
         <column name="job_title" type="VARCHAR" size="32" description="Employee job title"/>
         <column name="supervisor_id" type="INTEGER" description="Fkey to supervisor."/>
         <column name="photo" type="BLOB" lazyLoad="true"/>
@@ -168,19 +168,19 @@
 
     <!-- Test one-to-one (1:1) relationship, default values -->
     <table name="bookstore_employee_account" reloadOnInsert="true" reloadOnUpdate="true" description="Bookstore employees login credentials.">
-        <column name="employee_id" type="INTEGER" primaryKey="true" description="Primary key for the account ..."/>
-        <column name="login" type="VARCHAR" size="32"/>
+        <column name="employee_id" type="INTEGER" primaryKey="true" description="Primary key for the account ..." outputGroup="public,short"/>
+        <column name="login" type="VARCHAR" size="32" outputGroup="public,short"/>
         <column name="password" type="VARCHAR" size="100" default="'@''34&quot;"/>
         <column name="enabled" type="BOOLEAN" default="true"/>
         <column name="not_enabled" type="BOOLEAN" default="false"/>
-        <column name="created" type="TIMESTAMP" defaultExpr="CURRENT_TIMESTAMP"/>
+        <column name="created" type="TIMESTAMP" defaultExpr="CURRENT_TIMESTAMP" outputGroup="public"/>
         <column name="updated" type="TIMESTAMP" defaultExpr="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"/>
-        <column name="role_id" type="INTEGER" required="false" default="null"/>
-        <column name="authenticator" type="VARCHAR" size="32" defaultExpr="'Password'"/>
-        <foreign-key foreignTable="bookstore_employee" onDelete="cascade">
+        <column name="role_id" type="INTEGER" required="false" default="null" outputGroup="public"/>
+        <column name="authenticator" type="VARCHAR" size="32" defaultExpr="'Password'" outputGroup="public"/>
+        <foreign-key foreignTable="bookstore_employee" onDelete="cascade" outputGroup="public,short">
             <reference local="employee_id" foreign="id"/>
         </foreign-key>
-        <foreign-key foreignTable="acct_access_role" onDelete="setnull">
+        <foreign-key foreignTable="acct_access_role" onDelete="setnull" outputGroup="public">
             <reference local="role_id" foreign="id"/>
         </foreign-key>
         <unique>
@@ -189,10 +189,10 @@
     </table>
 
     <table name="acct_audit_log">
-        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true"/>
+        <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true" outputGroup="public"/>
         <column name="uid" type="VARCHAR" size="32" required="true"/>
-        <column name="message" type="VARCHAR" size="255"/>
-        <foreign-key foreignTable="bookstore_employee_account" onDelete="cascade">
+        <column name="message" type="VARCHAR" size="255" outputGroup="public,short"/>
+        <foreign-key foreignTable="bookstore_employee_account" onDelete="cascade" refOutputGroup="public">
             <reference local="uid" foreign="login"/>
         </foreign-key>
         <index>
