@@ -79,7 +79,6 @@ class OutputGroupTest extends BookstoreTestBase
             'JobTitle' => 'Manger',
             'SupervisorId' => null,
             'Photo' => null,
-            'BookstoreEmployeeAccount' => ['*RECURSION*'],
         ];
 
         $role = [

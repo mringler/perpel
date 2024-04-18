@@ -3150,7 +3150,8 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
      *  'localVariableName': string,
      *  'relationName': string,
      *  'targetKeyLookupStatement': string,
-     *  'isCollection': bool
+     *  'isCollection': bool,
+     *  'relationId': string
      * }>
      */
     protected function buildRelationFormatterData(): array
@@ -3165,6 +3166,7 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
                 'relationName' => $this->getFKPhpNameAffix($fk),
                 'targetKeyLookupStatement' => $lookup,
                 'isCollection' => false,
+                'relationId' => $fk->getName(),
             ];
         }
 
@@ -3180,6 +3182,7 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
                 'relationName' => $relationName,
                 'targetKeyLookupStatement' => $lookup,
                 'isCollection' => !$isLocal,
+                'relationId' => $ref->getName(),
             ];
         }
 

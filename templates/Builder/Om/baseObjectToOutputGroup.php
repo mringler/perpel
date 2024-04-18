@@ -59,7 +59,11 @@
 <?php if ($relationFormatter['isCollection']): // call ObjectCollection::toOutputGroup() ?>
             $result[$key] = $this-><?= $relationFormatter['localVariableName'] ?>->toOutputGroup($outputGroup, null, $keyType, $alreadyDumpedObjects);
 <?php else: // call Model::toOutputGroup() (this method) ?>
-            $result[$key] = $this-><?= $relationFormatter['localVariableName'] ?>->toOutputGroup($outputGroup, $keyType, $alreadyDumpedObjects);
+    
+            if (!isset($alreadyDumpedObjects['<?= $relationFormatter['relationId'] ?>'][$this-><?= $relationFormatter['localVariableName']?>->hashCode()])){
+                $alreadyDumpedObjects['<?= $relationFormatter['relationId'] ?>'][$this-><?= $relationFormatter['localVariableName']?>->hashCode()] = 1;
+                $result[$key] = $this-><?= $relationFormatter['localVariableName'] ?>->toOutputGroup($outputGroup, $keyType, $alreadyDumpedObjects);
+            }
 <?php endif ?>
         }
 <?php endforeach;?>
