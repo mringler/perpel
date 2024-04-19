@@ -84,7 +84,6 @@ class OutputGroupTest extends BookstoreTestBase
         $role = [
             'Id' => 5,
             'Name' => 'le role name',
-            'BookstoreEmployeeAccounts' => [['*RECURSION*']],
         ];
 
         $logsPublic = [

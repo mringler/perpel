@@ -52,19 +52,27 @@
         foreach ($virtualColumns as $key => $virtualColumn) {
             $result[$key] = $virtualColumn;
         }
-<?php foreach($relationFormatterData as $relationFormatter): ?>
+<?php foreach($relationFormatterData as $relationFormatter): 
+    [
+        'localVariableName' => $localVariableName,
+        'relationName' => $relationName,
+        'targetKeyLookupStatement' => $targetKeyLookupStatement,
+        'isCollection' => $isCollection,
+        'relationId' => $relationId,
+    ] = $relationFormatter;
 
-        if ($this-><?= $relationFormatter['localVariableName'] ?> !== null && ($relationsLookup === null || isset($relationsLookup['<?= $relationFormatter['relationName'] ?>']))) {
-            <?= $relationFormatter['targetKeyLookupStatement'] ?>
-<?php if ($relationFormatter['isCollection']): // call ObjectCollection::toOutputGroup() ?>
-            $result[$key] = $this-><?= $relationFormatter['localVariableName'] ?>->toOutputGroup($outputGroup, null, $keyType, $alreadyDumpedObjects);
-<?php else: // call Model::toOutputGroup() (this method) ?>
-    
-            if (!isset($alreadyDumpedObjects['<?= $relationFormatter['relationId'] ?>'][$this-><?= $relationFormatter['localVariableName']?>->hashCode()])){
-                $alreadyDumpedObjects['<?= $relationFormatter['relationId'] ?>'][$this-><?= $relationFormatter['localVariableName']?>->hashCode()] = 1;
-                $result[$key] = $this-><?= $relationFormatter['localVariableName'] ?>->toOutputGroup($outputGroup, $keyType, $alreadyDumpedObjects);
+    $hashSource = $isCollection ? '$this' : '$this->' . $localVariableName;
+    $dumpedLookupStatement = "\$alreadyDumpedObjects['{$relationId}'][{$hashSource}->hashCode()]";
+    $outputGroupArgsStatement = $isCollection ? '$outputGroup, null, $keyType, $alreadyDumpedObjects' : '$outputGroup, $keyType, $alreadyDumpedObjects'
+?>
+
+        if ($this-><?= $localVariableName ?> !== null && ($relationsLookup === null || isset($relationsLookup['<?= $relationName ?>']))) {
+            <?= $targetKeyLookupStatement ?>
+
+            if (!isset(<?= $dumpedLookupStatement ?>)){
+                <?= $dumpedLookupStatement ?> = 1;
+                $result[$key] = $this-><?= $localVariableName ?>->toOutputGroup(<?= $outputGroupArgsStatement ?>);
             }
-<?php endif ?>
         }
 <?php endforeach;?>
 
