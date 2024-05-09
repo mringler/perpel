@@ -15,7 +15,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Propel\Tests\Generator\Behavior\Archivable;
+namespace Propel\Tests\Generator\Behavior\SyncedTable;
 
 use Exception;
 use Propel\Generator\Exception\EngineException;
@@ -27,10 +27,8 @@ use Propel\Generator\Util\QuickBuilder;
 use Propel\Tests\TestCase;
 
 /**
- * Tests the `sync` parameter of ArchivableBehavior, which automatically applies
- * changes to the source table to the archive table.
  */
-class ArchivableBehaviorSyncTest extends TestCase
+class SyncedTableBehaviorTest extends TestCase
 {
  /**
   * @return array
@@ -49,11 +47,11 @@ class ArchivableBehaviorSyncTest extends TestCase
                 <column name="fk_column" type="INTEGER"/>
                 <column name="string_column" type="VARCHAR" size="42"/>
                 ',
-                // archive table input columns
+                // synced table input columns
                 '',
                 // auxiliary schema data
                 '',
-                // archive output columns
+                // synced output columns
                 '
                 <column name="id" required="true" primaryKey="true" type="INTEGER"/>
                 <column name="fk_column" type="INTEGER"/>
@@ -61,20 +59,20 @@ class ArchivableBehaviorSyncTest extends TestCase
                 ',
             ], [
                 // description
-                'Cannot override columns declared on archive table',
+                'Cannot override columns declared on synced table',
                 //additional behavior parameters
                 '',
                 // source table columns: column with size 8
                 '<column name="string_column" type="VARCHAR" size="8"/>',
-                // archive table input columns: column with size 999
+                // synced table input columns: column with size 999
                 '<column name="string_column" type="VARCHAR" size="999"/>',
                 // auxiliary schema data
                 '',
-                // archive output columns
+                // synced output columns
                 '<column name="string_column" type="VARCHAR" size="999"/>',
             ], [
                 // description
-                'Should sync index',
+                'Should sync index by default',
                 //additional behavior parameters
                 '',
                 // source table columns: column with index
@@ -84,16 +82,36 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <index-column name="string_column" />
                 </index>
                 ',
-                // archive table input columns
+                // synced table input columns
                 '',
                 // auxiliary schema data
                 '',
-                // archive output columns
+                // synced output columns
                 '
                 <column name="string_column" type="VARCHAR" size="42"/>
-                <index name="archive_table_i_811f1f">
+                <index name="synced_table_i_811f1f">
                     <index-column name="string_column" />
                 </index>
+                ',
+            ], [
+                // description
+                'Syncing index can be disabled',
+                //additional behavior parameters
+                '<parameter name="sync_indexes" value="false"/>',
+                // source table columns: column with index
+                '
+                <column name="string_column" type="VARCHAR" size="42"/>
+                <index>
+                    <index-column name="string_column" />
+                </index>
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="string_column" type="VARCHAR" size="42"/>
                 ',
             ], [
                 // description
@@ -107,7 +125,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <reference local="fk_column" foreign="id"/>
                 </foreign-key>
                 ',
-                // archive table input columns
+                // synced table input columns
                 '',
                 // auxiliary schema data
                 '
@@ -115,7 +133,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <column name="id" required="true" primaryKey="true" autoIncrement="true" type="INTEGER"/>
                 </table>
                 ',
-                // archive output columns
+                // synced output columns
                 '<column name="fk_column" type="INTEGER"/>',
             ], [
                 // description
@@ -129,7 +147,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <reference local="fk_column" foreign="id"/>
                 </foreign-key>
                 ',
-                // archive table input columns
+                // synced table input columns
                 '',
                 // auxiliary schema data
                 '
@@ -137,7 +155,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <column name="id" required="true" primaryKey="true" autoIncrement="true" type="INTEGER"/>
                 </table>
                 ',
-                // archive output columns
+                // synced output columns
                 '
                 <column name="fk_column" type="INTEGER"/>
                 <foreign-key foreignTable="fk_table" name="LeFk">
@@ -166,7 +184,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <reference local="fk_column" foreign="id"/>
                 </foreign-key>
                 ',
-                // archive table input columns
+                // synced table input columns
                 '',
                 // auxiliary schema data
                 '
@@ -177,7 +195,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <column name="id" type="INTEGER"/>
                 </table>
                 ',
-                // archive output columns
+                // synced output columns
                 '
                 <column name="fk_column" type="INTEGER"/>
                 <foreign-key foreignTable="new_table" name="LeName">
@@ -186,7 +204,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                 ',
             ], [
                 // description
-                'Behavior cannot override FKs declared on archive table',
+                'Behavior cannot override FKs declared on synced table',
                 //additional behavior parameters: declare fk
                 '
                 <parameter-list name="foreign_keys">
@@ -200,7 +218,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                 ',
                 // source table columns
                 '<column name="fk_column" type="INTEGER"/>',
-                // archive table input columns: fk conflicting with behavior fk
+                // synced table input columns: fk conflicting with behavior fk
                 '
                 <column name="fk_column" type="INTEGER"/>
                 <foreign-key foreignTable="old_table" name="LeName">
@@ -216,7 +234,7 @@ class ArchivableBehaviorSyncTest extends TestCase
                     <column name="id" type="INTEGER"/>
                 </table>
                 ',
-                // archive output columns: expect exception
+                // synced output columns: expect exception
                 EngineException::class,
             ],
         ];
@@ -228,9 +246,9 @@ class ArchivableBehaviorSyncTest extends TestCase
      * @param string $message
      * @param string $behaviorAdditions
      * @param string $sourceTableContentTags
-     * @param string $archiveTableInputTags
+     * @param string $syncedTableInputTags
      * @param string $auxiliaryTables
-     * @param string $archiveTableOutputTags
+     * @param string $syncedTableOutputTags
      *
      * @return void
      */
@@ -238,18 +256,17 @@ class ArchivableBehaviorSyncTest extends TestCase
         string $message,
         string $behaviorAdditions,
         string $sourceTableContentTags,
-        string $archiveTableInputTags,
+        string $syncedTableInputTags,
         string $auxiliaryTables,
-        string $archiveTableOutputTags
+        string $syncedTableOutputTags
     ) {
         // source table: some columns
-        // archive table: empty
+        // synced table: empty
         $schema = <<<EOT
 <database>
     <table name="source_table">
-        <behavior name="archivable">
-            <parameter name="archive_table" value="archive_table"/>
-            <parameter name="log_archived_at" value="false"/>
+        <behavior name="synced_table">
+            <parameter name="synced_table" value="synced_table"/>
             <parameter name="sync" value="true"/>
             $behaviorAdditions
         </behavior>
@@ -260,25 +277,25 @@ class ArchivableBehaviorSyncTest extends TestCase
     
     $auxiliaryTables
 
-    <table name="archive_table">$archiveTableInputTags</table>
+    <table name="synced_table">$syncedTableInputTags</table>
 </database>
 EOT;
 
-        // archive table: all columns plus archived_at
+        // synced table: all columns
         $expected = <<<EOT
 <database>
-    <table name="archive_table">
-    $archiveTableOutputTags
+    <table name="synced_table">
+    $syncedTableOutputTags
     </table>
 
     $auxiliaryTables
 </database>
 EOT;
 
-        if (class_exists($archiveTableOutputTags) && is_subclass_of($archiveTableOutputTags, Exception::class)) {
-            $this->expectException($archiveTableOutputTags);
+        if (class_exists($syncedTableOutputTags) && is_subclass_of($syncedTableOutputTags, Exception::class)) {
+            $this->expectException($syncedTableOutputTags);
         }
-        $this->assertSchemaTableMatches($expected, $schema, 'archive_table', $message);
+        $this->assertSchemaTableMatches($expected, $schema, 'synced_table', $message);
     }
 
     /**
@@ -335,7 +352,7 @@ EOT;
         return <<<EOT
 $inputMessage
 
-Synced archive table not as expected:
+Synced table not as expected:
 ───────────────────────────────────────────────────────
 Diff summary:
 
