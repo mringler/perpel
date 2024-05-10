@@ -72,9 +72,9 @@ class SyncedTableBehaviorTest extends TestCase
                 '<column name="string_column" type="VARCHAR" size="999"/>',
             ], [
                 // description
-                'Should not sync index by default',
+                'Should sync index if requested',
                 //additional behavior parameters
-                '',
+                '<parameter name="sync_indexes" value="true"/>',
                 // source table columns: column with index
                 '
                 <column name="string_column" type="VARCHAR" size="42"/>
@@ -89,6 +89,9 @@ class SyncedTableBehaviorTest extends TestCase
                 // synced output columns
                 '
                 <column name="string_column" type="VARCHAR" size="42"/>
+                <index>
+                    <index-column name="string_column" />
+                </index>
                 ',
             ], [
                 // description
@@ -410,6 +413,73 @@ class SyncedTableBehaviorTest extends TestCase
                 <column name="lePk" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
                 <foreign-key foreignTable="source_table" onDelete="cascade">
                     <reference local="col1" foreign="col1"/>
+                </foreign-key>
+                ',
+            ], [
+                // description
+                'Behavior ignores marked columns',
+                //additional behavior parameters
+                '
+                <parameter name="ignore_columns" value="col1,col3"/>
+                <parameter name="sync_indexes" value="true"/>
+                <parameter name="sync_unique_as" value="unique"/>
+                <parameter name="inherit_foreign_key_constraints" value="true"/>
+                ',
+                // source table columns: column with fk
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                <index>
+                    <index-column name="col1" />
+                </index>
+                <index>
+                    <index-column name="col1" />
+                    <index-column name="col3" />
+                </index>
+                <index>
+                    <index-column name="col1" />
+                    <index-column name="col2" />
+                    <index-column name="col3" />
+                </index>
+                <unique>
+                    <unique-column name="col1" />
+                </unique>
+                <unique>
+                    <unique-column name="col2" />
+                </unique>
+                <unique>
+                    <unique-column name="col2" />
+                    <unique-column name="col3" />
+                </unique>
+                <foreign-key foreignTable="fk_table" name="fk12">
+                    <reference local="col1" foreign="col1"/>
+                    <reference local="col2" foreign="col2"/>
+                </foreign-key>
+                <foreign-key foreignTable="fk_table" name="fk2">
+                    <reference local="col2" foreign="col2"/>
+                </foreign-key>
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '
+                <table name="fk_table">
+                    <column name="col1" type="INTEGER"/>
+                    <column name="col2" type="INTEGER"/>
+                </table>
+                ',
+                // synced output columns
+                '
+                <column name="col2" type="INTEGER" />
+                <index>
+                    <index-column name="col2" />
+                </index>
+                <unique>
+                    <unique-column name="col2" />
+                </unique>
+                <foreign-key foreignTable="fk_table" name="fk2">
+                    <reference local="col2" foreign="col2"/>
                 </foreign-key>
                 ',
             ],

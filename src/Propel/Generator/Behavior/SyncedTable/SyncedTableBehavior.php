@@ -10,6 +10,7 @@ namespace Propel\Generator\Behavior\SyncedTable;
 
 use Propel\Generator\Exception\SchemaException;
 use Propel\Generator\Model\Behavior;
+use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
@@ -88,6 +89,11 @@ class SyncedTableBehavior extends Behavior
     public const PARAMETER_KEY_SYNC_UNIQUE_AS = 'sync_unique_as';
 
     /**
+     * @var string
+     */
+    public const PARAMETER_KEY_IGNORE_COLUMNS = 'ignore_columns';
+
+    /**
      * @var \Propel\Generator\Model\Table|null
      */
     protected $syncedTable;
@@ -136,6 +142,7 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_SYNC_INDEXES => 'false',
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
             static::PARAMETER_KEY_CASCADE_DELETES => 'false',
+            static::PARAMETER_KEY_IGNORE_COLUMNS => null,
         ];
     }
 
@@ -263,7 +270,8 @@ class SyncedTableBehavior extends Behavior
         $sourceTable = $this->getTable();
 
         $columns = $sourceTable->getColumns();
-        $this->syncColumns($syncedTable, $columns);
+        $ignoreColumnNames = $this->getDefaultValueForSet($this->parameters[static::PARAMETER_KEY_IGNORE_COLUMNS] ?? '') ?? [];
+        $this->syncColumns($syncedTable, $columns, $ignoreColumnNames);
 
         if ($this->parameterHasValue(static::PARAMETER_KEY_CASCADE_DELETES, 'true')) {
             $this->addCascadingForeignKeyToSyncedTable($syncedTable, $sourceTable);
@@ -275,20 +283,20 @@ class SyncedTableBehavior extends Behavior
         $inheritFkConstraints = $this->parameterHasValue(static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS, 'true');
         if ($inheritFkRelations || $inheritFkConstraints) {
             $foreignKeys = $sourceTable->getForeignKeys();
-            $this->syncForeignKeys($syncedTable, $foreignKeys, $inheritFkConstraints);
+            $this->syncForeignKeys($syncedTable, $foreignKeys, $inheritFkConstraints, $ignoreColumnNames);
         }
 
         if ($this->parameterHasValue(static::PARAMETER_KEY_SYNC_INDEXES, 'true')) {
             $indexes = $sourceTable->getIndices();
             $platform = $sourceTable->getDatabase()->getPlatform();
             $renameIndexes = $this->isDistinctiveIndexNameRequired($platform);
-            $this->syncIndexes($syncedTable, $indexes, $renameIndexes);
+            $this->syncIndexes($syncedTable, $indexes, $renameIndexes, $ignoreColumnNames);
         }
 
         if (in_array($this->parameters[static::PARAMETER_KEY_SYNC_UNIQUE_AS], ['unique', 'index'])) {
             $asIndex = $this->parameters[static::PARAMETER_KEY_SYNC_UNIQUE_AS] !== 'unique';
             $uniqueIndexes = $sourceTable->getUnices();
-            $this->syncUniqueIndexes($asIndex, $syncedTable, $uniqueIndexes);
+            $this->syncUniqueIndexes($asIndex, $syncedTable, $uniqueIndexes, $ignoreColumnNames);
         }
 
         $this->reapplyTableBehaviors($sourceTable);
@@ -385,13 +393,14 @@ class SyncedTableBehavior extends Behavior
     /**
      * @param \Propel\Generator\Model\Table $syncedTable
      * @param array<\Propel\Generator\Model\Column> $columns
+     * @param array<string> $ignoreColumnNames
      *
      * @return void
      */
-    protected function syncColumns(Table $syncedTable, array $columns)
+    protected function syncColumns(Table $syncedTable, array $columns, array $ignoreColumnNames)
     {
         foreach ($columns as $sourceColumn) {
-            if ($syncedTable->hasColumn($sourceColumn)) {
+            if (in_array($sourceColumn->getName(), $ignoreColumnNames) || $syncedTable->hasColumn($sourceColumn)) {
                 continue;
             }
             $syncedColumn = clone $sourceColumn;
@@ -406,18 +415,22 @@ class SyncedTableBehavior extends Behavior
      * @param \Propel\Generator\Model\Table $syncedTable
      * @param array<\Propel\Generator\Model\ForeignKey> $foreignKeys
      * @param bool $inheritConstraints
+     * @param array<string> $ignoreColumnNames
      *
      * @return void
      */
-    protected function syncForeignKeys(Table $syncedTable, array $foreignKeys, bool $inheritConstraints)
+    protected function syncForeignKeys(Table $syncedTable, array $foreignKeys, bool $inheritConstraints, array $ignoreColumnNames)
     {
-        foreach ($foreignKeys as $foreignKey) {
-            if ($syncedTable->containsForeignKeyWithSameName($foreignKey)) {
+        foreach ($foreignKeys as $originalForeignKey) {
+            if (
+                $syncedTable->containsForeignKeyWithSameName($originalForeignKey)
+                || array_intersect($originalForeignKey->getLocalColumns(), $ignoreColumnNames)
+            ) {
                 continue;
             }
-            $copiedForeignKey = clone $foreignKey;
-            $copiedForeignKey->setSkipSql(!$inheritConstraints);
-            $syncedTable->addForeignKey($copiedForeignKey);
+            $syncedForeignKey = clone $originalForeignKey;
+            $syncedForeignKey->setSkipSql(!$inheritConstraints);
+            $syncedTable->addForeignKey($syncedForeignKey);
         }
     }
 
@@ -425,22 +438,49 @@ class SyncedTableBehavior extends Behavior
      * @param \Propel\Generator\Model\Table $syncedTable
      * @param array<\Propel\Generator\Model\Index> $indexes
      * @param bool $rename
+     * @param array<string> $ignoreColumnNames
      *
      * @return void
      */
-    protected function syncIndexes(Table $syncedTable, array $indexes, bool $rename)
+    protected function syncIndexes(Table $syncedTable, array $indexes, bool $rename, array $ignoreColumnNames)
     {
-        foreach ($indexes as $index) {
-            $copiedIndex = clone $index;
+        foreach ($indexes as $originalIndex) {
+            $index = clone $originalIndex;
+
+            if (!$this->removeColumnsFromIndex($index, $ignoreColumnNames)) {
+                continue;
+            }
+
             if ($rename) {
                 // by removing the name, Propel will generate a unique name based on table and columns
-                $copiedIndex->setName(null);
+                $index->setName(null);
             }
             if ($syncedTable->hasIndex($index->getName())) {
                 continue;
             }
-            $syncedTable->addIndex($copiedIndex);
+            $syncedTable->addIndex($index);
         }
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Index $index
+     * @param array $columnNames
+     *
+     * @return \Propel\Generator\Model\Index|null Returns null if the index has no remaining columns.
+     */
+    protected function removeColumnsFromIndex(Index $index, array $columnNames): ?Index
+    {
+        $ignoredColumnsInIndex = array_intersect($index->getColumns(), $columnNames);
+        if (!$ignoredColumnsInIndex) {
+            return $index;
+        }
+        if (count($ignoredColumnsInIndex) === count($index->getColumns())) {
+            return null;
+        }
+        $indexColumns = array_filter($index->getColumnObjects(), fn (Column $col) => !in_array($col->getName(), $ignoredColumnsInIndex));
+        $index->setColumns($indexColumns);
+
+        return $index;
     }
 
     /**
@@ -452,13 +492,17 @@ class SyncedTableBehavior extends Behavior
      * @param bool $asIndex
      * @param \Propel\Generator\Model\Table $syncedTable
      * @param array<\Propel\Generator\Model\Unique> $uniqueIndexes
+     * @param array<string> $ignoreColumnNames
      *
      * @return void
      */
-    protected function syncUniqueIndexes(bool $asIndex, Table $syncedTable, array $uniqueIndexes)
+    protected function syncUniqueIndexes(bool $asIndex, Table $syncedTable, array $uniqueIndexes, array $ignoreColumnNames)
     {
         $indexClass = $asIndex ? Index::class : Unique::class;
         foreach ($uniqueIndexes as $unique) {
+            if (array_intersect($unique->getColumns(), $ignoreColumnNames)) {
+                continue;
+            }
             $index = new $indexClass();
             $index->setTable($syncedTable);
             foreach ($unique->getColumns() as $columnName) {
