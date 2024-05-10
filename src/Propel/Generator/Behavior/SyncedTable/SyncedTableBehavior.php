@@ -89,9 +89,18 @@ class SyncedTableBehavior extends Behavior
     public const PARAMETER_KEY_SYNC_UNIQUE_AS = 'sync_unique_as';
 
     /**
+     * List of column names (csv) that should not be synced.
+     *
      * @var string
      */
     public const PARAMETER_KEY_IGNORE_COLUMNS = 'ignore_columns';
+
+    /**
+     * Either list of column names (csv) or 'true' to use ignored columns.
+     *
+     * @var string
+     */
+    public const PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS = 'empty_accessor_columns';
 
     /**
      * @var \Propel\Generator\Model\Table|null
@@ -143,6 +152,7 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
             static::PARAMETER_KEY_CASCADE_DELETES => 'false',
             static::PARAMETER_KEY_IGNORE_COLUMNS => null,
+            static::PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS => null,
         ];
     }
 
@@ -207,11 +217,29 @@ class SyncedTableBehavior extends Behavior
             $database->getTable($syncedTableName) :
             $this->createSyncedTable();
 
+        $this->addEmptyAccessorsToSyncedTable();
+
         if (!$tableExistsInSchema || $this->parameterHasValue(static::PARAMETER_KEY_SYNC, 'true')) {
             $this->syncTables();
         } else {
             $this->addCustomElements($this->syncedTable);
         }
+    }
+
+    /**
+     * @return void
+     */
+    protected function addEmptyAccessorsToSyncedTable()
+    {
+        $emptyAccessorColumnNames = $this->parameters[static::PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS] ?? null;
+        if ($emptyAccessorColumnNames === 'true') {
+            $emptyAccessorColumnNames = $this->parameters[static::PARAMETER_KEY_IGNORE_COLUMNS] ?? null;
+        }
+
+        if (!$emptyAccessorColumnNames) {
+            return;
+        }
+        EmptyColumnAccessorsBehavior::addToTable($this->syncedTable, $emptyAccessorColumnNames);
     }
 
     /**

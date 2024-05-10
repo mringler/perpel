@@ -69,6 +69,7 @@ class ArchivableBehavior extends SyncedTableBehavior
             static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_SYNC_INDEXES => 'true',
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
+            static::PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS => 'true',
             'log_archived_at' => 'true',
             'archived_at_column' => 'archived_at',
             'archive_on_insert' => 'false',
