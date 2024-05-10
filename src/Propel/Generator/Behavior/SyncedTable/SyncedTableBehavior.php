@@ -13,6 +13,7 @@ use Propel\Generator\Model\Behavior;
 use Propel\Generator\Model\ForeignKey;
 use Propel\Generator\Model\Index;
 use Propel\Generator\Model\Table;
+use Propel\Generator\Model\Unique;
 use Propel\Generator\Platform\PgsqlPlatform;
 use Propel\Generator\Platform\PlatformInterface;
 use Propel\Generator\Platform\SqlitePlatform;
@@ -68,6 +69,11 @@ class SyncedTableBehavior extends Behavior
     public const PARAMETER_KEY_SYNC_INDEXES = 'sync_indexes';
 
     /**
+     * @var string
+     */
+    public const PARAMETER_KEY_SYNC_UNIQUE_AS = 'sync_unique_as';
+
+    /**
      * @var \Propel\Generator\Model\Table|null
      */
     protected $syncedTable;
@@ -113,6 +119,7 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS => 'false',
             static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_SYNC_INDEXES => 'true',
+            static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
         ];
     }
 
@@ -234,9 +241,12 @@ class SyncedTableBehavior extends Behavior
             $platform = $sourceTable->getDatabase()->getPlatform();
             $renameIndexes = $this->isDistinctiveIndexNameRequired($platform);
             $this->syncIndexes($syncedTable, $indexes, $renameIndexes);
+        }
 
+        if (in_array($this->parameters[static::PARAMETER_KEY_SYNC_UNIQUE_AS], ['unique', 'index'])) {
+            $asIndex = $this->parameters[static::PARAMETER_KEY_SYNC_UNIQUE_AS] !== 'unique';
             $uniqueIndexes = $sourceTable->getUnices();
-            $this->syncUniqueIndexes($syncedTable, $uniqueIndexes);
+            $this->syncUniqueIndexes($asIndex, $syncedTable, $uniqueIndexes);
         }
 
         $behaviors = $sourceTable->getDatabase()->getBehaviors();
@@ -323,15 +333,17 @@ class SyncedTableBehavior extends Behavior
      * The synced table cannot use unique indexes, as even unique data on the
      * source table can be syncedd several times.
      *
+     * @param bool $asIndex
      * @param \Propel\Generator\Model\Table $syncedTable
      * @param array<\Propel\Generator\Model\Unique> $uniqueIndexes
      *
      * @return void
      */
-    protected function syncUniqueIndexes(Table $syncedTable, array $uniqueIndexes)
+    protected function syncUniqueIndexes(bool $asIndex, Table $syncedTable, array $uniqueIndexes)
     {
+        $indexClass = $asIndex ? Index::class : Unique::class;
         foreach ($uniqueIndexes as $unique) {
-            $index = new Index();
+            $index = new $indexClass();
             $index->setTable($syncedTable);
             foreach ($unique->getColumns() as $columnName) {
                 $columnDef = [
@@ -341,10 +353,12 @@ class SyncedTableBehavior extends Behavior
                 $index->addColumn($columnDef);
             }
 
-            if ($syncedTable->hasIndex($index->getName())) {
+            $existingIndexes = $asIndex ? $syncedTable->getIndices() : $syncedTable->getUnices();
+            $existingIndexNames = array_map(fn ($index) => $index->getName(), $existingIndexes);
+            if (in_array($index->getName(), $existingIndexNames)) {
                 continue;
             }
-            $syncedTable->addIndex($index);
+            $asIndex ? $syncedTable->addIndex($index) : $syncedTable->addUnique($index);
         }
     }
 

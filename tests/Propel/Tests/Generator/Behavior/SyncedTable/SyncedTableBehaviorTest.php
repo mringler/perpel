@@ -236,6 +236,107 @@ class SyncedTableBehaviorTest extends TestCase
                 ',
                 // synced output columns: expect exception
                 EngineException::class,
+            ], [
+                // description
+                'Behavior does not sync unique indexes by default',
+                //additional behavior parameters
+                '',
+                // source table columns: column with fk
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                <unique>
+                    <unique-column name="col1" />
+                </unique>
+                <unique>
+                    <unique-column name="col2" />
+                    <unique-column name="col3" />
+                </unique>
+
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                ',
+            ], [
+                // description
+                'Behavior syncs unique indexes as regular indexes if requested',
+                //additional behavior parameters
+                '<parameter name="sync_unique_as" value="index"/>',
+                // source table columns: column with fk
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                <unique>
+                    <unique-column name="col1" />
+                </unique>
+                <unique>
+                    <unique-column name="col2" />
+                    <unique-column name="col3" />
+                </unique>
+
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                <index>
+                    <index-column name="col1" />
+                </index>
+                <index>
+                    <index-column name="col2" />
+                    <index-column name="col3" />
+                </index>
+                ',
+            ], [
+                // description
+                'Behavior syncs unique indexes as unique indexes if requested',
+                //additional behavior parameters
+                '<parameter name="sync_unique_as" value="unique"/>',
+                // source table columns: column with fk
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                <unique>
+                    <unique-column name="col1" />
+                </unique>
+                <unique>
+                    <unique-column name="col2" />
+                    <unique-column name="col3" />
+                </unique>
+
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" />
+                <column name="col2" type="INTEGER" />
+                <column name="col3" type="INTEGER" />
+                <unique>
+                    <unique-column name="col1" />
+                </unique>
+                <unique>
+                    <unique-column name="col2" />
+                    <unique-column name="col3" />
+                </unique>
+                ',
             ],
         ];
     }

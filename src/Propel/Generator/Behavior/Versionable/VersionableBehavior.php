@@ -82,6 +82,7 @@ class VersionableBehavior extends SyncedTableBehavior
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS => 'false',
             static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_SYNC_INDEXES => 'false',
+            static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
             'log_created_at' => 'false',
             'log_created_by' => 'false',
             'log_comment' => 'false',
