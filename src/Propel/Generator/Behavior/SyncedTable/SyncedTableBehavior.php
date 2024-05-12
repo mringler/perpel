@@ -115,9 +115,9 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_SYNCED_TABLE => '',
             static::PARAMETER_KEY_SYNCED_PHPNAME => null,
             static::PARAMETER_KEY_SYNC => 'true',
+            static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_RELATIONS => 'false',
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS => 'false',
-            static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_SYNC_INDEXES => 'true',
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
         ];
@@ -184,11 +184,11 @@ class SyncedTableBehavior extends Behavior
             $database->getTable($syncedTableName) :
             $this->createSyncedTable();
 
-        if ($tableExistsInSchema && !$this->parameterHasValue(static::PARAMETER_KEY_SYNC, 'true')) {
-            return;
+        if (!$tableExistsInSchema || $this->parameterHasValue(static::PARAMETER_KEY_SYNC, 'true')) {
+            $this->syncTables();
+        } else {
+            $this->addCustomElements($this->syncedTable);
         }
-
-        $this->syncTables();
     }
 
     /**
@@ -220,14 +220,7 @@ class SyncedTableBehavior extends Behavior
         $columns = $sourceTable->getColumns();
         $this->syncColumns($syncedTable, $columns);
 
-        $this->addCustomColumnsToSyncedTable($syncedTable);
-
-        $foreignKeys = $this->getParameter(static::PARAMETER_KEY_FOREIGN_KEYS);
-        if ($foreignKeys) {
-            foreach ($foreignKeys as $fkData) {
-                $this->createForeignKeyFromParameters($syncedTable, $fkData);
-            }
-        }
+        $this->addCustomElements($syncedTable);
 
         $inheritFkRelations = $this->parameterHasValue(static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_RELATIONS, 'true');
         $inheritFkConstraints = $this->parameterHasValue(static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS, 'true');
@@ -249,10 +242,20 @@ class SyncedTableBehavior extends Behavior
             $this->syncUniqueIndexes($asIndex, $syncedTable, $uniqueIndexes);
         }
 
-        $behaviors = $sourceTable->getDatabase()->getBehaviors();
-        $this->reapplyBehaviors($behaviors);
+        $this->reapplyTableBehaviors($sourceTable);
 
         return $syncedTable;
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Table $syncedTable
+     *
+     * @return void
+     */
+    protected function addCustomElements(Table $syncedTable)
+    {
+        $this->addCustomColumnsToSyncedTable($syncedTable);
+        $this->addCustomForeignKeysToSyncedTable($syncedTable);
     }
 
     /**
@@ -264,6 +267,21 @@ class SyncedTableBehavior extends Behavior
      */
     protected function addCustomColumnsToSyncedTable(Table $syncedTable)
     {
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Table $syncedTable
+     *
+     * @return void
+     */
+    protected function addCustomForeignKeysToSyncedTable(Table $syncedTable)
+    {
+        $foreignKeys = $this->getParameter(static::PARAMETER_KEY_FOREIGN_KEYS);
+        if ($foreignKeys) {
+            foreach ($foreignKeys as $fkData) {
+                $this->createForeignKeyFromParameters($syncedTable, $fkData);
+            }
+        }
     }
 
     /**
@@ -363,12 +381,13 @@ class SyncedTableBehavior extends Behavior
     }
 
     /**
-     * @param array $behaviors
+     * @param \Propel\Generator\Model\Table $table
      *
      * @return void
      */
-    protected function reapplyBehaviors(array $behaviors)
+    protected function reapplyTableBehaviors(Table $table)
     {
+        $behaviors = $table->getDatabase()->getBehaviors();
         foreach ($behaviors as $behavior) {
             if ($behavior instanceof SyncedTableBehavior) {
                 continue;

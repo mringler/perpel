@@ -363,7 +363,7 @@ class SyncedTableBehaviorTest extends TestCase
     ) {
         // source table: some columns
         // synced table: empty
-        $schema = <<<EOT
+        $inputSchemaXml = <<<EOT
 <database>
     <table name="source_table">
         <behavior name="synced_table">
@@ -383,7 +383,7 @@ class SyncedTableBehaviorTest extends TestCase
 EOT;
 
         // synced table: all columns
-        $expected = <<<EOT
+        $expectedTableXml = <<<EOT
 <database>
     <table name="synced_table">
     $syncedTableOutputTags
@@ -396,7 +396,7 @@ EOT;
         if (class_exists($syncedTableOutputTags) && is_subclass_of($syncedTableOutputTags, Exception::class)) {
             $this->expectException($syncedTableOutputTags);
         }
-        $this->assertSchemaTableMatches($expected, $schema, 'synced_table', $message);
+        $this->assertSchemaTableMatches($expectedTableXml, $inputSchemaXml, 'synced_table', $message);
     }
 
     /**
@@ -407,12 +407,12 @@ EOT;
      *
      * @return void
      */
-    protected function assertSchemaTableMatches(string $expectedTableXml, string $schema, string $tableName, ?string $message = null)
+    protected function assertSchemaTableMatches(string $expectedTableXml, string $inputSchemaXml, string $tableName, ?string $message = null)
     {
         $expectedSchema = $this->buildSchema($expectedTableXml);
         $expectedTable = $expectedSchema->getTable($tableName);
 
-        $actualSchema = $this->buildSchema($schema);
+        $actualSchema = $this->buildSchema($inputSchemaXml);
         $actualTable = $actualSchema->getTable($tableName);
 
         $diff = TableComparator::computeDiff($actualTable, $expectedTable);
