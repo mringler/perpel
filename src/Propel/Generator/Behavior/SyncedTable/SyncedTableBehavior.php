@@ -118,7 +118,7 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_RELATIONS => 'false',
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS => 'false',
-            static::PARAMETER_KEY_SYNC_INDEXES => 'true',
+            static::PARAMETER_KEY_SYNC_INDEXES => 'false',
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
         ];
     }

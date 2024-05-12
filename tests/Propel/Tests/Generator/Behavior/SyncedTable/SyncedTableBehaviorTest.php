@@ -72,9 +72,29 @@ class SyncedTableBehaviorTest extends TestCase
                 '<column name="string_column" type="VARCHAR" size="999"/>',
             ], [
                 // description
-                'Should sync index by default',
+                'Should not sync index by default',
                 //additional behavior parameters
                 '',
+                // source table columns: column with index
+                '
+                <column name="string_column" type="VARCHAR" size="42"/>
+                <index>
+                    <index-column name="string_column" />
+                </index>
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="string_column" type="VARCHAR" size="42"/>
+                ',
+            ], [
+                // description
+                'Syncing index can be enabled',
+                //additional behavior parameters
+                '<parameter name="sync_indexes" value="true"/>',
                 // source table columns: column with index
                 '
                 <column name="string_column" type="VARCHAR" size="42"/>
@@ -92,26 +112,6 @@ class SyncedTableBehaviorTest extends TestCase
                 <index name="synced_table_i_811f1f">
                     <index-column name="string_column" />
                 </index>
-                ',
-            ], [
-                // description
-                'Syncing index can be disabled',
-                //additional behavior parameters
-                '<parameter name="sync_indexes" value="false"/>',
-                // source table columns: column with index
-                '
-                <column name="string_column" type="VARCHAR" size="42"/>
-                <index>
-                    <index-column name="string_column" />
-                </index>
-                ',
-                // synced table input columns
-                '',
-                // auxiliary schema data
-                '',
-                // synced output columns
-                '
-                <column name="string_column" type="VARCHAR" size="42"/>
                 ',
             ], [
                 // description
