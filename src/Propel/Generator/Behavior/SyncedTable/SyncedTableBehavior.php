@@ -44,6 +44,11 @@ class SyncedTableBehavior extends Behavior
     public const PARAMETER_KEY_SYNCED_PHPNAME = 'synced_phpname';
 
     /**
+     * @var string The name of the added pk column ('id' if set to 'true').
+     */
+    public const PARAMETER_KEY_ADD_PK = 'add_pk';
+
+    /**
      * @var string
      */
     public const PARAMETER_KEY_SYNC = 'sync';
@@ -116,6 +121,7 @@ class SyncedTableBehavior extends Behavior
         return [
             static::PARAMETER_KEY_SYNCED_TABLE => '',
             static::PARAMETER_KEY_SYNCED_PHPNAME => null,
+            static::PARAMETER_KEY_ADD_PK => null,
             static::PARAMETER_KEY_SYNC => 'true',
             static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_RELATIONS => 'false',
@@ -298,6 +304,35 @@ class SyncedTableBehavior extends Behavior
      */
     protected function addCustomColumnsToSyncedTable(Table $syncedTable)
     {
+        $this->addPkColumn($syncedTable);
+    }
+
+    /**
+     * Allows inheriting classes to add columns.
+     *
+     * @param \Propel\Generator\Model\Table $table
+     *
+     * @return void
+     */
+    protected function addPkColumn(Table $table)
+    {
+        $pkParamValue = $this->parameters[static::PARAMETER_KEY_ADD_PK] ?? null;
+        if (!$pkParamValue || $pkParamValue === 'false') {
+            return;
+        }
+        $idColumnName = ($pkParamValue === 'true') ? 'id' : $pkParamValue;
+        $this->addColumnIfNotExists($table, $idColumnName, [
+            'type' => 'INTEGER',
+            'required' => 'true',
+            'primaryKey' => 'true',
+            'autoIncrement' => 'true',
+        ]);
+        foreach ($table->getPrimaryKey() as $pkColumn) {
+            if ($pkColumn->getName() === $idColumnName) {
+                continue;
+            }
+            $pkColumn->setPrimaryKey(false);
+        }
     }
 
     /**

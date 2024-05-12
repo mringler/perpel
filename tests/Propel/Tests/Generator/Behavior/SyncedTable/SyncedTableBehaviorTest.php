@@ -337,6 +337,41 @@ class SyncedTableBehaviorTest extends TestCase
                     <unique-column name="col3" />
                 </unique>
                 ',
+            ], [
+                // description
+                'Behavior can add pk',
+                //additional behavior parameters
+                '<parameter name="add_pk" value="true"/>',
+                // source table columns: column with index
+                '
+                <column name="col1" type="INTEGER" primaryKey="true"/>
+                <column name="col2" type="INTEGER" primaryKey="true"/>
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" required="true"/>
+                <column name="col2" type="INTEGER" required="true"/>
+                <column name="id" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+                ',
+            ], [
+                // description
+                'Behavior can add renamed pk',
+                //additional behavior parameters
+                '<parameter name="add_pk" value="lePk"/>',
+                // source table columns: column with index
+                '',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="lePk" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+                ',
             ],
         ];
     }
