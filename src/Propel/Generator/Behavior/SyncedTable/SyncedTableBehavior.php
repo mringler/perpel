@@ -103,6 +103,13 @@ class SyncedTableBehavior extends Behavior
     public const PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS = 'empty_accessor_columns';
 
     /**
+     * Ignore all columns expect PK.
+     *
+     * @var string
+     */
+    public const PARAMETER_KEY_SYNC_PK_ONLY = 'sync_pk_only';
+
+    /**
      * @var \Propel\Generator\Model\Table|null
      */
     protected $syncedTable;
@@ -153,6 +160,7 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_CASCADE_DELETES => 'false',
             static::PARAMETER_KEY_IGNORE_COLUMNS => null,
             static::PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS => null,
+            static::PARAMETER_KEY_SYNC_PK_ONLY => 'false',
         ];
     }
 
@@ -233,7 +241,7 @@ class SyncedTableBehavior extends Behavior
     {
         $emptyAccessorColumnNames = $this->parameters[static::PARAMETER_KEY_EMPTY_ACCESSOR_COLUMNS] ?? null;
         if ($emptyAccessorColumnNames === 'true') {
-            $emptyAccessorColumnNames = $this->parameters[static::PARAMETER_KEY_IGNORE_COLUMNS] ?? null;
+            $emptyAccessorColumnNames = implode(',', $this->getIgnoredColumnNames());
         }
 
         if (!$emptyAccessorColumnNames) {
@@ -290,6 +298,22 @@ class SyncedTableBehavior extends Behavior
     }
 
     /**
+     * @return array<string>
+     */
+    protected function getIgnoredColumnNames(): array
+    {
+        $ignoreColumnNames = $this->getDefaultValueForSet($this->parameters[static::PARAMETER_KEY_IGNORE_COLUMNS] ?? '') ?? [];
+        $pkOnly = $this->parameterHasValue(static::PARAMETER_KEY_SYNC_PK_ONLY, 'true');
+        if (!$pkOnly) {
+            return $ignoreColumnNames;
+        }
+        $nonPkColumns = array_filter($this->table->getColumns(), fn (Column $column) => !$column->isPrimaryKey());
+        $nonPkColumnNames = array_map(fn (Column $column) => $column->getName(), $nonPkColumns);
+
+        return array_unique(array_merge($ignoreColumnNames, $nonPkColumnNames));
+    }
+
+    /**
      * @return \Propel\Generator\Model\Table
      */
     protected function syncTables(): Table
@@ -298,7 +322,7 @@ class SyncedTableBehavior extends Behavior
         $sourceTable = $this->getTable();
 
         $columns = $sourceTable->getColumns();
-        $ignoreColumnNames = $this->getDefaultValueForSet($this->parameters[static::PARAMETER_KEY_IGNORE_COLUMNS] ?? '') ?? [];
+        $ignoreColumnNames = $this->getIgnoredColumnNames();
         $this->syncColumns($syncedTable, $columns, $ignoreColumnNames);
 
         if ($this->parameterHasValue(static::PARAMETER_KEY_CASCADE_DELETES, 'true')) {

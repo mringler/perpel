@@ -482,6 +482,50 @@ class SyncedTableBehaviorTest extends TestCase
                     <reference local="col2" foreign="col2"/>
                 </foreign-key>
                 ',
+            ], [
+                // description
+                'Behavior can sync only PKs',
+                //additional behavior parameters
+                '
+                <parameter name="sync_pk_only" value="true"/>
+                ',
+                // source table columns: column with fk
+                '
+                <column name="col1" type="INTEGER" primaryKey="true"/>
+                <column name="col2" type="INTEGER" primaryKey="true" />
+                <column name="col3" type="INTEGER" />
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" primaryKey="true"/>
+                <column name="col2" type="INTEGER" primaryKey="true" />
+                ',
+            ], [
+                // description
+                'Behavior can sync reduced PKs',
+                //additional behavior parameters
+                '
+                <parameter name="sync_pk_only" value="true"/>
+                <parameter name="ignore_columns" value="col1"/>
+                ',
+                // source table columns: column with fk
+                '
+                <column name="col1" type="INTEGER" primaryKey="true"/>
+                <column name="col2" type="INTEGER" primaryKey="true" />
+                <column name="col3" type="INTEGER" />
+                ',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col2" type="INTEGER" primaryKey="true"/>
+                ',
             ],
         ];
     }
