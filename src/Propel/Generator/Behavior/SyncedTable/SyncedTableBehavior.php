@@ -51,7 +51,19 @@ class SyncedTableBehavior extends Behavior
     /**
      * @var string
      */
+    public const PARAMETER_KEY_FOREIGN_KEYS = 'foreign_keys';
+
+    /**
+     * @var string
+     */
     public const PARAMETER_KEY_SYNC = 'sync';
+
+    /**
+     * Parameter sets a foreign key with ON DELETE CASCADE on the synced primary key.
+     *
+     * @var string
+     */
+    public const PARAMETER_KEY_CASCADE_DELETES = 'cascade_deletes';
 
     /**
      * @var string
@@ -62,11 +74,6 @@ class SyncedTableBehavior extends Behavior
      * @var string
      */
     public const PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS = 'inherit_foreign_key_constraints';
-
-    /**
-     * @var string
-     */
-    public const PARAMETER_KEY_FOREIGN_KEYS = 'foreign_keys';
 
     /**
      * @var string
@@ -128,6 +135,7 @@ class SyncedTableBehavior extends Behavior
             static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_CONSTRAINTS => 'false',
             static::PARAMETER_KEY_SYNC_INDEXES => 'false',
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
+            static::PARAMETER_KEY_CASCADE_DELETES => 'false',
         ];
     }
 
@@ -257,6 +265,10 @@ class SyncedTableBehavior extends Behavior
         $columns = $sourceTable->getColumns();
         $this->syncColumns($syncedTable, $columns);
 
+        if ($this->parameterHasValue(static::PARAMETER_KEY_CASCADE_DELETES, 'true')) {
+            $this->addCascadingForeignKeyToSyncedTable($syncedTable, $sourceTable);
+        }
+
         $this->addCustomElements($syncedTable);
 
         $inheritFkRelations = $this->parameterHasValue(static::PARAMETER_KEY_INHERIT_FOREIGN_KEY_RELATIONS, 'true');
@@ -333,6 +345,26 @@ class SyncedTableBehavior extends Behavior
             }
             $pkColumn->setPrimaryKey(false);
         }
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Table $syncedTable
+     * @param \Propel\Generator\Model\Table $sourceTable
+     *
+     * @return void
+     */
+    protected function addCascadingForeignKeyToSyncedTable(Table $syncedTable, Table $sourceTable): void
+    {
+        $fk = new ForeignKey();
+        $fk->setForeignTableCommonName($sourceTable->getCommonName());
+        $fk->setForeignSchemaName($sourceTable->getSchema());
+        $fk->setOnDelete('CASCADE');
+        $fk->setOnUpdate(null);
+        foreach ($sourceTable->getPrimaryKey() as $sourceColumn) {
+            $syncedColumn = $syncedTable->getColumn($sourceColumn->getName());
+            $fk->addReference($syncedColumn, $sourceColumn);
+        }
+        $syncedTable->addForeignKey($fk);
     }
 
     /**

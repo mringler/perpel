@@ -83,6 +83,7 @@ class VersionableBehavior extends SyncedTableBehavior
             static::PARAMETER_KEY_FOREIGN_KEYS => null,
             static::PARAMETER_KEY_SYNC_INDEXES => 'false',
             static::PARAMETER_KEY_SYNC_UNIQUE_AS => null,
+            static::PARAMETER_KEY_CASCADE_DELETES => 'true',
             'log_created_at' => 'false',
             'log_created_by' => 'false',
             'log_comment' => 'false',
@@ -165,30 +166,11 @@ class VersionableBehavior extends SyncedTableBehavior
 
         $this->syncedTable->isVersionTable = true;
         $this->syncedTable->setSkipSql($this->getTable()->isSkipSql());
-        $this->setSyncedTableForeignKeys();
 
         // add the version column to the primary key
         $versionColumn = $this->syncedTable->getColumn($this->getParameter('version_column'));
         $versionColumn->setNotNull(true);
         $versionColumn->setPrimaryKey(true);
-    }
-
-    /**
-     * @return void
-     */
-    public function setSyncedTableForeignKeys(): void
-    {
-        $table = $this->getTable();
-        $fk = new ForeignKey();
-        $fk->setForeignTableCommonName($table->getCommonName());
-        $fk->setForeignSchemaName($table->getSchema());
-        $fk->setOnDelete('CASCADE');
-        $fk->setOnUpdate(null);
-        $tablePKs = $table->getPrimaryKey();
-        foreach ($this->syncedTable->getPrimaryKey() as $key => $column) {
-            $fk->addReference($column, $tablePKs[$key]);
-        }
-        $this->syncedTable->addForeignKey($fk);
     }
 
     /**

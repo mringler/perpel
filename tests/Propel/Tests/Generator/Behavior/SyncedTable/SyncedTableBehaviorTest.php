@@ -372,6 +372,46 @@ class SyncedTableBehaviorTest extends TestCase
                 '
                 <column name="lePk" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
                 ',
+            ], [
+                // description
+                'Behavior can add cascading FK',
+                //additional behavior parameters
+                '<parameter name="cascade_deletes" value="true"/>',
+                // source table columns: column with index
+                '<column name="col1" type="INTEGER" primaryKey="true"/>',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" primaryKey="true"/>
+                <foreign-key foreignTable="source_table" onDelete="cascade">
+                    <reference local="col1" foreign="col1"/>
+                </foreign-key>
+                ',
+            ], [
+                // description
+                'Behavior can add cascading FK when changing id',
+                //additional behavior parameters
+                '
+                <parameter name="cascade_deletes" value="true"/>
+                <parameter name="add_pk" value="lePk"/>
+                ',
+                // source table columns: column with index
+                '<column name="col1" type="INTEGER" primaryKey="true"/>',
+                // synced table input columns
+                '',
+                // auxiliary schema data
+                '',
+                // synced output columns
+                '
+                <column name="col1" type="INTEGER" required="true"/>
+                <column name="lePk" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+                <foreign-key foreignTable="source_table" onDelete="cascade">
+                    <reference local="col1" foreign="col1"/>
+                </foreign-key>
+                ',
             ],
         ];
     }
@@ -420,8 +460,12 @@ EOT;
         // synced table: all columns
         $expectedTableXml = <<<EOT
 <database>
+    <table name="source_table">
+        $sourceTableContentTags
+    </table>
+
     <table name="synced_table">
-    $syncedTableOutputTags
+        $syncedTableOutputTags
     </table>
 
     $auxiliaryTables
