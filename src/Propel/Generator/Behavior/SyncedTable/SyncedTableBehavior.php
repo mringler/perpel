@@ -69,6 +69,8 @@ class SyncedTableBehavior extends Behavior
     public const PARAMETER_KEY_SYNC_INDEXES = 'sync_indexes';
 
     /**
+     * Parameter can be set to 'index' or 'unique'.
+     *
      * @var string
      */
     public const PARAMETER_KEY_SYNC_UNIQUE_AS = 'sync_unique_as';
@@ -207,6 +209,35 @@ class SyncedTableBehavior extends Behavior
             'namespace' => $sourceTable->getNamespace() ? '\\' . $sourceTable->getNamespace() : null,
             'identifierQuoting' => $sourceTable->isIdentifierQuotingEnabled(),
         ]);
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Table $table
+     * @param string $parameterWithColumnName
+     * @param array $columnDefinition
+     *
+     * @return void
+     */
+    protected function addColumnFromParameterIfNotExists(Table $table, string $parameterWithColumnName, array $columnDefinition): void
+    {
+        $columnName = $this->getParameter($parameterWithColumnName);
+        $this->addColumnIfNotExists($table, $columnName, $columnDefinition);
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Table $table
+     * @param string $columnName
+     * @param array $columnDefinition
+     *
+     * @return void
+     */
+    protected function addColumnIfNotExists(Table $table, string $columnName, array $columnDefinition): void
+    {
+        if ($table->hasColumn($columnName)) {
+            return;
+        }
+        $columnDefinitionWithName = array_merge(['name' => $columnName], $columnDefinition);
+        $table->addColumn($columnDefinitionWithName);
     }
 
     /**

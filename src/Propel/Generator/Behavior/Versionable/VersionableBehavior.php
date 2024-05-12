@@ -111,8 +111,7 @@ class VersionableBehavior extends SyncedTableBehavior
      */
     public function modifyTable(): void
     {
-        $this->addVersionColumnToSourceTable();
-        $this->addLogColumnsToSourceTable();
+        $this->addColumnsToSourceTable();
         $this->addVersionTable();
         $this->addForeignKeyVersionColumns();
     }
@@ -120,41 +119,30 @@ class VersionableBehavior extends SyncedTableBehavior
     /**
      * @return void
      */
-    protected function addVersionColumnToSourceTable(): void
+    protected function addColumnsToSourceTable(): void
     {
         $table = $this->getTable();
-        // add the version column
-        if (!$table->hasColumn($this->getParameter('version_column'))) {
-            $table->addColumn([
-                'name' => $this->getParameter('version_column'),
-                'type' => 'INTEGER',
-                'default' => 0,
-            ]);
-        }
-    }
 
-    /**
-     * @return void
-     */
-    protected function addLogColumnsToSourceTable(): void
-    {
-        $table = $this->getTable();
-        if ($this->getParameter('log_created_at') === 'true' && !$table->hasColumn($this->getParameter('version_created_at_column'))) {
-            $table->addColumn([
-                'name' => $this->getParameter('version_created_at_column'),
+        $this->addColumnFromParameterIfNotExists($table, 'version_column', [
+            'type' => 'INTEGER',
+            'default' => 0,
+        ]);
+
+        if ($this->getParameter('log_created_at') === 'true') {
+            $this->addColumnFromParameterIfNotExists($table, 'version_created_at_column', [
                 'type' => 'TIMESTAMP',
             ]);
         }
-        if ($this->getParameter('log_created_by') === 'true' && !$table->hasColumn($this->getParameter('version_created_by_column'))) {
-            $table->addColumn([
-                'name' => $this->getParameter('version_created_by_column'),
+
+        if ($this->getParameter('log_created_by') === 'true') {
+            $this->addColumnFromParameterIfNotExists($table, 'version_created_by_column', [
                 'type' => 'VARCHAR',
                 'size' => 100,
             ]);
         }
-        if ($this->getParameter('log_comment') === 'true' && !$table->hasColumn($this->getParameter('version_comment_column'))) {
-            $table->addColumn([
-                'name' => $this->getParameter('version_comment_column'),
+
+        if ($this->getParameter('log_comment') === 'true') {
+            $this->addColumnFromParameterIfNotExists($table, 'version_comment_column', [
                 'type' => 'VARCHAR',
                 'size' => 255,
             ]);
@@ -211,32 +199,23 @@ class VersionableBehavior extends SyncedTableBehavior
         $versionTable = $this->syncedTable;
         foreach ($this->getVersionableFks() as $fk) {
             $fkVersionColumnName = $fk->getLocalColumnName() . '_version';
-            if (!$versionTable->hasColumn($fkVersionColumnName)) {
-                $versionTable->addColumn([
-                    'name' => $fkVersionColumnName,
-                    'type' => 'INTEGER',
-                    'default' => 0,
-                ]);
-            }
+            $this->addColumnIfNotExists($versionTable, $fkVersionColumnName, [
+                'type' => 'INTEGER',
+                'default' => 0,
+            ]);
         }
 
         foreach ($this->getVersionableReferrers() as $fk) {
             $fkTableName = $fk->getTable()->getName();
             $fkIdsColumnName = $fkTableName . '_ids';
-            if (!$versionTable->hasColumn($fkIdsColumnName)) {
-                $versionTable->addColumn([
-                    'name' => $fkIdsColumnName,
-                    'type' => 'ARRAY',
-                ]);
-            }
+            $this->addColumnIfNotExists($versionTable, $fkIdsColumnName, [
+                'type' => 'ARRAY',
+            ]);
 
             $fkVersionsColumnName = $fkTableName . '_versions';
-            if (!$versionTable->hasColumn($fkVersionsColumnName)) {
-                $versionTable->addColumn([
-                    'name' => $fkVersionsColumnName,
-                    'type' => 'ARRAY',
-                ]);
-            }
+            $this->addColumnIfNotExists($versionTable, $fkVersionsColumnName, [
+                'type' => 'ARRAY',
+            ]);
         }
     }
 

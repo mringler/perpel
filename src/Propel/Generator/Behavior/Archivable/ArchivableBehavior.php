@@ -101,17 +101,9 @@ class ArchivableBehavior extends SyncedTableBehavior
      */
     protected function addCustomColumnsToSyncedTable(Table $syncedTable)
     {
-        if (!$this->parameterHasValue('log_archived_at', 'true')) {
-            return;
+        if ($this->parameterHasValue('log_archived_at', 'true')) {
+            $this->addColumnFromParameterIfNotExists($syncedTable, 'archived_at_column', ['type' => 'TIMESTAMP']);
         }
-        $columnName = $this->getParameter('archived_at_column');
-        if ($syncedTable->hasColumn($columnName)) {
-            return;
-        }
-        $syncedTable->addColumn([
-            'name' => $columnName,
-            'type' => 'TIMESTAMP',
-        ]);
     }
 
     /**
