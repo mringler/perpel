@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<database name="bookstore-behavior" defaultIdMethod="native" package="behavior.auditable" namespace="\Propel\Tests\Generator\Behavior\Auditable">
+
+  <table name="source_with_default_audit">
+    <column name="id" required="true" primaryKey="true" autoIncrement="true" type="INTEGER"/>
+    <column name="regular_column" type="VARCHAR" size="42"/>
+    <column name="ignored_column" type="VARCHAR" size="42"/>
+    <column name="omited_column" type="VARCHAR" size="42"/>
+    <column name="omited_type_column" type="CLOB"/>
+
+    <behavior name="auditable">
+        <parameter name="ignore_fields" value="ignored_column"/>
+        <parameter name="omit_value_fields" value="omited_column"/>
+        <parameter name="omit_value_types" value="CLOB"/>
+        <parameter name="omit_value" value="got changed"/>
+    </behavior>
+  </table>
+
+  <table name="source_with_complex_audit">
+    <column name="id" required="true" primaryKey="true" autoIncrement="true" type="INTEGER"/>
+    <column name="regular_column" type="VARCHAR" size="42"/>
+    <column name="ignored_column" type="VARCHAR" size="42"/>
+    <column name="omited_column" type="VARCHAR" size="42"/>
+    <column name="omited_type_column" type="BLOB"/>
+
+    <behavior name="auditable">
+
+        <!-- renames -->
+        <parameter name="table_name" value="le_complex_audit"/>
+        <parameter name="synced_phpname" value="LeAuditComplique"/>
+        <parameter name="id_field_name" value="le_id"/>
+        <parameter name="audited_at_field_name" value="le_at"/>
+        <parameter name="audit_event_field_name" value="le_when"/>
+        <parameter name="changed_values_field_name" value="le_changes"/>
+        <parameter name="column_prefix" value="le_source_"/>
+
+        <!-- additional data -->
+        <parameter-list name="columns">
+            <parameter-list-item>
+                <parameter name="name" value="fk_to_source_id"/>
+                <parameter name="type" value="integer"/>
+            </parameter-list-item>
+        </parameter-list>
+        <parameter-list name="foreign_keys">
+            <parameter-list-item>
+                <parameter name="name" value="LeFk" />
+                <parameter name="localColumn" value="fk_to_source_id" />
+                <parameter name="foreignTable" value="source_with_complex_audit" />
+                <parameter name="foreignColumn" value="id" />
+                <parameter name="phpName" value="ManualFk" />
+                <parameter name="refPhpName" value="ManualFk" />
+            </parameter-list-item>
+        </parameter-list>
+        <parameter name="add_aggregation_to_source" value="number_of_audits"/>
+
+        <!-- ignores/omits -->
+        <parameter name="ignore_fields" value="ignored_column"/>
+        <parameter name="omit_value_fields" value="omited_column"/>
+        <parameter name="omit_value_types" value="BLOB"/>
+        <parameter name="omit_value" value="got changed"/>
+
+        <!-- behavior -->
+        <parameter name="audit_on_insert" value="id"/>
+        <parameter name="audit_on_delete" value=""/>
+        <parameter name="cascade_delete" value=""/>
+    </behavior>
+  </table>
+
+
+</database>
