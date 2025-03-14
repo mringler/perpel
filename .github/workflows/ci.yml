@@ -61,35 +61,17 @@ jobs:
                   mariadb version: '10.2'
                   mysql root password: $DB_PW
 
-            - name: Setup PHP, with composer and extensions
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  extensions: json, libxml, pdo, pdo_mysql, pdo_sqlite, pdo_pgsql, sqlite3
-                  coverage: pcov
-
-            - name: Checkout
-              uses: actions/checkout@v3
+            - uses: actions/checkout@v3
 
             - name: Move specific composer.json (Symfony version ${{ matrix.symfony-version }})
               run: mv tests/composer/composer-symfony${{ matrix.symfony-version }}.json composer.json
 
-            - name: Composer get cache directory
-              id: composer-cache
-              run: echo "cache_files_dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
-
-            - name: Composer cache dependencies
-              uses: actions/cache@v4.2.0
+            - id: build-container
+              uses: ./.github/actions/setup-php
               with:
-                  path: ${{ steps.composer-cache.outputs.cache_files_dir }}
-                  key: ${{ runner.os }}-composer-php:${{ matrix.php-version }}-symfony:${{ matrix.symfony-version }}-${{ matrix.db-type}}
-                  restore-keys: |
-                      ${{ runner.os }}-composer-php:${{ matrix.php-version }}-symfony:${{ matrix.symfony-version }}-
-                      ${{ runner.os }}-composer-php:${{ matrix.php-version }}-
-                      ${{ runner.os }}-composer-
-
-            - name: Composer install (Symfony version ${{ matrix.symfony-version }})
-              run: composer install --no-progress --prefer-dist --optimize-autoloader
+                php-version: ${{ matrix.php-version }}
+                symfony-version: ${{ matrix.symfony-version }}
+                cache-key-suffix: ${{ matrix.db-type}}
 
             - name: Wait for MySQL server to load
               if: matrix.db-type == 'mysql'
@@ -143,78 +125,29 @@ jobs:
     static-analysis:
         runs-on: ubuntu-24.04
         steps:
-            - name: Setup PHP
-              id: setup-php
-              uses: shivammathur/setup-php@v2
+            - uses: actions/checkout@v3
+            - id: build-container
+              uses: ./.github/actions/setup-php
               with:
-                  php-version: '8.1'
-                  extensions: json, libxml, pdo, pdo_mysql, pdo_sqlite, pdo_pgsql, sqlite3
-                  coverage: pcov
-
-            - uses: actions/checkout@v2
-
-            - name: Composer get cache directory
-              id: composer-cache
-              run: |
-                  echo "cache_files_dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
-
-            - name: Composer cache
-              uses: actions/cache@v4.2.0
-              with:
-                  path: ${{ steps.composer-cache.outputs.cache_files_dir }}
-                  key: ${{ runner.os }}-composer-php:8.1-symfony:6-max-sa
-                  restore-keys: |
-                      ${{ runner.os }}-composer-php:8.1-symfony:6-max-
-                      ${{ runner.os }}-composer-php:8.1-
-                      ${{ runner.os }}-composer-
-
-            - name: Composer validate
-              run: composer validate
-
-            - name: Composer install
-              run: composer install --prefer-dist --no-interaction
-
+                php-version: 8.1
+                symfony-version: 6-max
+                cache-key-suffix: sa
             - name: PHPStan
               env:
                 PHPSTAN: 1
               run: composer stan
-
             - name: Psalm
-              run: composer psalm -- --php-version=${{ steps.setup-php.outputs.php-version }}
+              run: composer psalm -- --php-version=${{ steps.build-container.outputs.php-version }}
 
     code-style:
         runs-on: ubuntu-24.04
         steps:
-            - name: Setup PHP
-              id: setup-php
-              uses: shivammathur/setup-php@v2
+            - uses: actions/checkout@v3
+            - id: build-container
+              uses: ./.github/actions/setup-php
               with:
-                  php-version: '8.1'
-                  extensions: json, libxml, pdo, pdo_mysql, pdo_sqlite, pdo_pgsql, sqlite3
-                  coverage: pcov
-
-            - uses: actions/checkout@v2
-
-            - name: Composer get cache directory
-              id: composer-cache
-              run: |
-                  echo "cache_files_dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
-
-            - name: Composer cache
-              uses: actions/cache@v4.2.0
-              with:
-                  path: ${{ steps.composer-cache.outputs.cache_files_dir }}
-                  key: ${{ runner.os }}-composer-php:8.1-symfony:6-max-cs
-                  restore-keys: |
-                      ${{ runner.os }}-composer-php:8.1-symfony:6-max-
-                      ${{ runner.os }}-composer-php:8.1-
-                      ${{ runner.os }}-composer-
-
-            - name: Composer validate
-              run: composer validate
-
-            - name: Composer install
-              run: composer install --prefer-dist --no-interaction
-
+                php-version: 8.1
+                symfony-version: 6-max
+                cache-key-suffix: cs
             - name: Code Style
               run: composer cs-check
