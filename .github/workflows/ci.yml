@@ -110,7 +110,7 @@ jobs:
                   if [[ ${{ matrix.php-version }} == '7.4' && ${{ matrix.symfony-version == '5-max' }} ]]; then
                     export CODECOVERAGE=1 && vendor/bin/phpunit -c tests/${{ matrix.db-type }}.phpunit.xml --verbose --coverage-clover=tests/coverage.xml
                   else
-                    vendor/bin/phpunit -c tests/${{ matrix.db-type }}.phpunit.xml
+                    vendor/bin/phpunit -c tests/${{ matrix.db-type }}.phpunit.xml --stop-on-error
                   fi
               env:
                 SYMFONY_VERSION: ${{ matrix.symfony-version }}
