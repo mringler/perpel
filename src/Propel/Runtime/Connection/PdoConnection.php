@@ -82,6 +82,7 @@ class PdoConnection implements ConnectionInterface
 
         $this->pdo = new PDO($dsn, $user, $password, $pdoOptions);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_TIMEOUT, 2);
     }
 
     /**
