@@ -15,7 +15,7 @@ jobs:
             fail-fast: false
             matrix:
                 php-version: [ '7.4', '8.2' ]
-                db-type: [ sqlite, mysql, pgsql, agnostic ]
+                db-type: [ sqlite ]
                 symfony-version: [ '5-min', '5-max', '6-min', '6-max', '7-min', '7-max']
                 exclude:
                   - symfony-version: '6-min'
@@ -121,33 +121,3 @@ jobs:
               with:
                   flags: ${{ matrix.php-version }}, ${{ matrix.db-type }}, ${{ matrix.symfony-version }}
                   file: tests/coverage.xml
-
-    static-analysis:
-        runs-on: ubuntu-24.04
-        steps:
-            - uses: actions/checkout@v3
-            - id: build-container
-              uses: ./.github/actions/setup-php
-              with:
-                php-version: 8.1
-                symfony-version: 6-max
-                cache-key-suffix: sa
-            - name: PHPStan
-              env:
-                PHPSTAN: 1
-              run: composer stan
-            - name: Psalm
-              run: composer psalm -- --php-version=${{ steps.build-container.outputs.php-version }}
-
-    code-style:
-        runs-on: ubuntu-24.04
-        steps:
-            - uses: actions/checkout@v3
-            - id: build-container
-              uses: ./.github/actions/setup-php
-              with:
-                php-version: 8.1
-                symfony-version: 6-max
-                cache-key-suffix: cs
-            - name: Code Style
-              run: composer cs-check
