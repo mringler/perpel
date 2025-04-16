@@ -1507,9 +1507,10 @@ class ModelCriteria extends BaseModelCriteria
             /** @phpstan-var \Propel\Runtime\ActiveRecord\ActiveRecordInterface $obj */
             $obj = new $class();
             if (method_exists($obj, 'setByName')) {
+                $quoteColumnName = false;
                 // turn column filters to values (this is very messy...)
                 foreach ($this->filterCollector->getColumnFilters() as $filter) {
-                    $columnIdentifier = $filter->getLocalColumnName();
+                    $columnIdentifier = $filter->getLocalColumnName($quoteColumnName);
                     $value = $filter->getValue();
                     $obj->setByName($columnIdentifier, $value, TableMap::TYPE_COLNAME);
                 }
