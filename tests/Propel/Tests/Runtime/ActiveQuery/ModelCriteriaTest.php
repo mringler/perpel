@@ -3117,4 +3117,18 @@ class ModelCriteriaTest extends BookstoreTestBase
             ->select(AuthorTableMap::COL_LAST_NAME)
             ->find();
     }
+
+    /**
+     * @return void
+     */
+    public function testFindOneOrCreateWithIdentifierQuoting()
+    {
+        $book = BookQuery::create('b')
+            ->setIdentifierQuoting(true)
+            ->filterByPrice(125)
+            ->findOneOrCreate();
+
+        $this->assertTrue($book instanceof Book, 'findOneOrCreate() returns an instance of the model when the request has no result');
+        $this->assertTrue($book->isNew(), 'findOneOrCreate() returns a new instance of the model when the request has no result');
+    }
 }
