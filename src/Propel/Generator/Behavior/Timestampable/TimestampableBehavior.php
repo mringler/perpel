@@ -107,7 +107,7 @@ class TimestampableBehavior extends Behavior
             $updateColumn = $this->getTable()->getColumn($this->getParameter('update_column'));
 
             $dateTimeClass = $builder instanceof ObjectBuilder
-                ? $builder->getDateTimeClass($updateColumn)
+                ? $builder->resolveColumnDateTimeClass($updateColumn)
                 : DateTime::class;
 
             $valueSource = strtoupper($updateColumn->getType()) === 'INTEGER'
@@ -138,7 +138,7 @@ $mtime = PropelDateTime::formatMicrotime(microtime(true));';
             $createColumn = $this->getTable()->getColumn($this->getParameter('create_column'));
 
             $dateTimeClass = $builder instanceof ObjectBuilder
-                ? $builder->getDateTimeClass($createColumn)
+                ? $builder->resolveColumnDateTimeClass($createColumn)
                 : DateTime::class;
 
             $script .= "
@@ -157,7 +157,7 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('create_column', $bui
             $updateColumn = $this->getTable()->getColumn($this->getParameter('update_column'));
 
             $dateTimeClass = $builder instanceof ObjectBuilder
-                ? $builder->getDateTimeClass($updateColumn)
+                ? $builder->resolveColumnDateTimeClass($updateColumn)
                 : DateTime::class;
 
             $script .= "

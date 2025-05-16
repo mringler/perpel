@@ -22,8 +22,10 @@ use Propel\Generator\Builder\Util\NameProducer;
 use Propel\Generator\Builder\Util\ReferencedClasses;
 use Propel\Generator\Config\GeneratorConfigInterface;
 use Propel\Generator\Exception\LogicException;
+use Propel\Generator\Model\Column;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Inheritance;
+use Propel\Generator\Model\PropelTypes;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PlatformInterface;
 
@@ -692,5 +694,19 @@ abstract class DataModelBuilder
     public function getDeclaredClasses(?string $namespace = null): array
     {
         return $this->referencedClasses->getDeclaredClasses($namespace);
+    }
+
+    /**
+     * @param \Propel\Generator\Model\Column $column
+     *
+     * @return string
+     */
+    public function resolveColumnDateTimeClass(Column $column): string
+    {
+        if (PropelTypes::isPhpObjectType($column->getPhpType())) {
+            return $column->getPhpType();
+        }
+
+        return $this->getBuildProperty('generator.dateTime.dateTimeClass') ?: '\DateTime';
     }
 }
