@@ -190,7 +190,7 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('update_column', $bui
 /**
  * Mark the current object so that the update date doesn't get updated during next save
  *
- * @return \$this The current object (for fluent API support)
+ * @return \$this
  */
 public function keepUpdateDateUnchanged()
 {

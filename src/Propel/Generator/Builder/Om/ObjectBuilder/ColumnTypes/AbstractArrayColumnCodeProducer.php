@@ -75,12 +75,12 @@ abstract class AbstractArrayColumnCodeProducer extends ColumnCodeProducer
      * @param mixed \$value
      * @param ConnectionInterface \$con An optional ConnectionInterface connection to use for fetching this lazy-loaded column.
      *
-     * @return \$this The current object (for fluent API support)
+     * @return \$this
      */
     $visibility function add$singularPhpName(\$value, ?ConnectionInterface \$con = null)
     {
         \$currentArray = \$this->get$cfc(\$con);
-        \$currentArray []= \$value;
+        \$currentArray[] = \$value;
         \$this->set$cfc(\$currentArray);
 
         return \$this;
@@ -90,7 +90,7 @@ abstract class AbstractArrayColumnCodeProducer extends ColumnCodeProducer
      *
      * @param mixed \$value
      *
-     * @return \$this The current object (for fluent API support)
+     * @return \$this
      */
     $visibility function add$singularPhpName(\$value)
     {
