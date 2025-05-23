@@ -95,7 +95,7 @@ abstract class AbstractArrayColumnCodeProducer extends ColumnCodeProducer
     $visibility function add$singularPhpName(\$value)
     {
         \$currentArray = \$this->get$cfc();
-        \$currentArray []= \$value;
+        \$currentArray[] = \$value;
         \$this->set$cfc(\$currentArray);
 
         return \$this;
