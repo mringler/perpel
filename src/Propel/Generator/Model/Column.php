@@ -1757,6 +1757,37 @@ class Column extends MappingModel
      */
     public function resolveQualifiedType(): string
     {
-        return $this->typeHint ?: ($this->getPhpType() ?: 'mixed');
+        $typeHint = $this->getTypeHint();
+        if ($typeHint) {
+            return $typeHint;
+        } elseif ($this->getType() === PropelTypes::OBJECT) {
+            return 'mixed';
+        } elseif ($this->isPhpArrayType()) {
+            return 'string';
+        } elseif ($this->isLobType()) {
+            $phpType = $this->getPhpType();
+
+            return $phpType && $phpType !== 'string' ? "$phpType|string" : 'string';
+        } elseif ($this->getPhpType()) {
+            return $this->getPhpType();
+        } else {
+            return 'mixed';
+        }
+    }
+
+    /**
+     * The column type literal as used in argument or method return type hint.
+     *
+     * @return string
+     */
+    public function resolveTypehintType(): string
+    {
+        $type = $this->resolveQualifiedType();
+        $lastSlashPos = strrpos($type, '\\');
+        if ($lastSlashPos !== false) {
+            $type = substr($type, $lastSlashPos + 1);
+        }
+
+        return $type;
     }
 }
