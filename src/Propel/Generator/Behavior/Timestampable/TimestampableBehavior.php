@@ -131,8 +131,7 @@ class TimestampableBehavior extends Behavior
      */
     public function preInsert(AbstractOMBuilder $builder): string
     {
-        $script = '$time = time();
-$mtime = PropelDateTime::formatMicrotime(microtime(true));';
+        $script = '$mtime = microtime(true);';
 
         if ($this->withCreatedAt()) {
             $createColumn = $this->getTable()->getColumn($this->getParameter('create_column'));
@@ -141,12 +140,10 @@ $mtime = PropelDateTime::formatMicrotime(microtime(true));';
                 ? $builder->getDateTimeClass($createColumn)
                 : DateTime::class;
 
-            $script .= "
-\$highPrecisionCreate = PropelDateTime::createHighPrecision(\$mtime, '$dateTimeClass');";
-
             $valueSource = strtoupper($createColumn->getType()) === 'INTEGER'
-                ? '$time'
-                : '$highPrecisionCreate';
+                ? '(int)$mtime'
+                : "PropelDateTime::createHighPrecision(PropelDateTime::formatMicrotime(\$mtime), '$dateTimeClass')";
+
             $script .= "
 if (!\$this->isColumnModified(" . $this->getColumnConstant('create_column', $builder) . ")) {
     \$this->" . $this->getColumnSetter('create_column') . "({$valueSource});
@@ -160,12 +157,10 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('create_column', $bui
                 ? $builder->getDateTimeClass($updateColumn)
                 : DateTime::class;
 
-            $script .= "
-\$highPrecisionUpdate = PropelDateTime::createHighPrecision(\$mtime, '$dateTimeClass');";
-
             $valueSource = strtoupper($updateColumn->getType()) === 'INTEGER'
-                ? '$time'
-                : '$highPrecisionUpdate';
+                ? '(int)$mtime'
+                : "PropelDateTime::createHighPrecision(PropelDateTime::formatMicrotime(\$mtime), '$dateTimeClass')";
+
             $script .= "
 if (!\$this->isColumnModified(" . $this->getColumnConstant('update_column', $builder) . ")) {
     \$this->" . $this->getColumnSetter('update_column') . "({$valueSource});
