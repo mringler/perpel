@@ -20,6 +20,7 @@ use Propel\Runtime\ActiveQuery\ColumnResolver\ColumnResolver;
 use Propel\Runtime\ActiveQuery\ColumnResolver\NormalizedFilterExpression;
 use Propel\Runtime\ActiveQuery\Criterion\Exception\InvalidClauseException;
 use Propel\Runtime\ActiveQuery\FilterExpression\ColumnFilterInterface;
+use Propel\Runtime\ActiveQuery\FilterExpression\CombineOperatorManager;
 use Propel\Runtime\ActiveQuery\FilterExpression\FilterClauseLiteralWithColumns;
 use Propel\Runtime\ActiveQuery\FilterExpression\FilterClauseLiteralWithPdoTypes;
 use Propel\Runtime\ActiveQuery\FilterExpression\FilterCollector;
@@ -380,9 +381,10 @@ class Criteria
      * Default operator for combination of criterions
      *
      * @see addUsingOperator()
-     * @var string Criteria::LOGICAL_AND or Criteria::LOGICAL_OR
+     *
+     * @var \Propel\Runtime\ActiveQuery\FilterExpression\CombineOperatorManager
      */
-    protected $defaultCombineOperator = self::LOGICAL_AND;
+    protected CombineOperatorManager $filterOperatorManager;
 
     /**
      * @var \Propel\Runtime\Util\PropelConditionalProxy|null
@@ -416,6 +418,7 @@ class Criteria
         $this->originalDbName = $dbName;
         $this->updateValues = new UpdateColumnCollector();
         $this->filterCollector = new FilterCollectorCombiner();
+        $this->filterOperatorManager = new CombineOperatorManager();
     }
 
     /**
@@ -797,6 +800,8 @@ class Criteria
     }
 
     /**
+     * @deprecated use {@see static::addAnd()} to make operator explicit.
+     *
      * This method adds a new criterion to the list of criterias.
      * If a criterion for the requested column already exists, it is
      * replaced.
@@ -818,7 +823,7 @@ class Criteria
     public function addFilter($columnOrClause, $value = null, $comparison = null)
     {
         $columnFilter = $this->buildFilter($columnOrClause, $value, $comparison);
-        $this->filterCollector->addFilter($columnFilter);
+        $this->filterCollector->addFilterWithConjunction(static::LOGICAL_AND, $columnFilter, false);
 
         return $this;
     }
@@ -1715,7 +1720,7 @@ class Criteria
         $this->groupByColumns = array_unique($groupByColumns);
 
         // merge where conditions
-        $isOr = $operator === self::LOGICAL_OR || $this->defaultCombineOperator === self::LOGICAL_OR;
+        $isOr = $operator === self::LOGICAL_OR || $this->filterOperatorManager->getOperator() === self::LOGICAL_OR;
         $this->filterCollector->merge($criteria->filterCollector, $isOr);
 
         // merge update values
@@ -1914,14 +1919,15 @@ class Criteria
      *
      * Call {@see static::endCombineFilters()} to close parentheses.
      *
-     * @param string|null $andOr Operator used between previous filters and
-     *  combined filters. Defaults to AND, respects {@see static::_or()}.
+     * @param string|null $andOr Default Operator to combine filters.
      *
      * @return static
      */
     public function combineFilters(?string $andOr = null)
     {
-        $this->filterCollector->combineFilters($andOr ?? $this->getAndResetCombineOperator());
+        $outerOperator = $this->filterOperatorManager->getOperator();
+        $this->filterOperatorManager->setOperator($andOr ?? static::LOGICAL_AND, false);
+        $this->filterCollector->combineFilters($outerOperator);
 
         return $this;
     }
@@ -1936,6 +1942,7 @@ class Criteria
     public function endCombineFilters()
     {
         $this->filterCollector->endCombineFilters();
+        $this->filterOperatorManager->resetOperator();
 
         return $this;
     }
@@ -1954,20 +1961,9 @@ class Criteria
      */
     public function addUsingOperator($columnOrClause, $value = null, ?string $operator = null, bool $preferColumnCondition = true)
     {
-        $andOr = $this->getAndResetCombineOperator();
+        $andOr = $this->filterOperatorManager->getOperator();
 
         return $this->addFilterWithConjunction($andOr, $columnOrClause, $value, $operator, $preferColumnCondition);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getAndResetCombineOperator(): string
-    {
-        $op = $this->defaultCombineOperator;
-        $this->defaultCombineOperator = self::LOGICAL_AND;
-
-        return $op;
     }
 
     /**
@@ -2243,7 +2239,7 @@ class Criteria
      */
     public function _or()
     {
-        $this->defaultCombineOperator = self::LOGICAL_OR;
+        $this->filterOperatorManager->setOperator(self::LOGICAL_OR, true);
 
         return $this;
     }
@@ -2253,7 +2249,7 @@ class Criteria
      */
     public function _and()
     {
-        $this->defaultCombineOperator = self::LOGICAL_AND;
+        $this->filterOperatorManager->setOperator(self::LOGICAL_AND, true);
 
         return $this;
     }

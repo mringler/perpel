@@ -275,7 +275,7 @@ class DeprecatedCriteriaMethods extends Criteria
         if (is_array($t)) {
             foreach ($t as $key => $value) {
                 if ($value instanceof ColumnFilterInterface) {
-                    $this->criteria->filterCollector->addFilter($value);
+                    $this->criteria->filterCollector->addFilterWithConjunction(Criteria::LOGICAL_AND, $value, false);
                 } else {
                     $this->put($key, $value);
                 }

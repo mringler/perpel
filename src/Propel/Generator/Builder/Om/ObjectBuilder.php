@@ -3136,7 +3136,7 @@ abstract class {$this->getUnqualifiedClassName()}$parentClass implements ActiveR
             $columnName = $column->getName();
             $script .= "
         \${$columnName}Column = new LocalColumnExpression(\$criteria, \$tableMap->getName(), \$tableMap->getColumn('$columnName'));
-        \$criteria->addFilter(\${$columnName}Column, $dataAccessExpression);";
+        \$criteria->addAnd(\${$columnName}Column, $dataAccessExpression);";
         }
     }
 
