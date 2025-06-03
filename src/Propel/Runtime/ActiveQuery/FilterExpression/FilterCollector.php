@@ -26,16 +26,6 @@ class FilterCollector
     }
 
     /**
-     * @param \Propel\Runtime\ActiveQuery\FilterExpression\ColumnFilterInterface $columnFilter
-     *
-     * @return void
-     */
-    public function addFilter(ColumnFilterInterface $columnFilter)
-    {
-        $this->addFilterWithConjunction(ClauseList::AND_OPERATOR_LITERAL, $columnFilter, false);
-    }
-
-    /**
      * @param string $andOr
      * @param \Propel\Runtime\ActiveQuery\FilterExpression\ColumnFilterInterface $filter
      * @param bool $preferColumnCondition Group AND-filter by column.
