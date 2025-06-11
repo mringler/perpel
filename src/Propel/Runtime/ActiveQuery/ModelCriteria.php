@@ -806,7 +806,7 @@ class ModelCriteria extends BaseModelCriteria
             $modelName = $modelJoin->getRelationMap() ? $modelJoin->getRelationMap()->getName() : '';
             $secondaryCriteria->setModelAlias($relationName, !($relationName == $modelName));
         }
-
+        $secondaryCriteria->filterOperatorManager->setOperator($this->filterOperatorManager->getCurrentPermanentOperator());
         $secondaryCriteria->setPrimaryCriteria($this, $modelJoin);
 
         return $secondaryCriteria;
@@ -870,8 +870,8 @@ class ModelCriteria extends BaseModelCriteria
             $innerQuery->setModelAlias($modelAlias, true);
         }
 
-        $criterion = $innerQueryFilterClass::createForRelation($this, $relationMap, $operatorDeclaration, $innerQuery);
-        $this->addUsingOperator($criterion);
+        $filter = $innerQueryFilterClass::createForRelation($this, $relationMap, $operatorDeclaration, $innerQuery);
+        $this->addUsingOperator($filter);
 
         return $innerQuery;
     }
