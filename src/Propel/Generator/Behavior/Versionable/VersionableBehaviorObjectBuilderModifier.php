@@ -484,7 +484,7 @@ public function addVersion(?ConnectionInterface \$con = null)
  * @param int \$versionNumber The version number to read
  * @param \Propel\Runtime\Connection\ConnectionInterface|null \$con The ConnectionInterface connection to use.
  *
- * @return \$this The current object (for fluent API support)
+ * @return \$this
  */
 public function toVersion(\$versionNumber, ?ConnectionInterface \$con = null)
 {
@@ -520,7 +520,7 @@ public function toVersion(\$versionNumber, ?ConnectionInterface \$con = null)
  * @param \Propel\Runtime\Connection\ConnectionInterface \$con the connection to use
  * @param array \$loadedObjects objects that been loaded in a chain of populateFromVersion calls on referrer or fk objects.
  *
- * @return \$this The current object (for fluent API support)
+ * @return \$this
  */
 public function populateFromVersion(\$version, \$con = null, &\$loadedObjects = [])
 {";

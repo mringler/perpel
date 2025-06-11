@@ -4,7 +4,7 @@
  *
  * @param \Propel\Runtime\Connection\ConnectionInterface|null $con an optional connection object
  *
- * @return <?= $i18nTablePhpName ?>
+ * @return <?= $i18nTablePhpName ?> 
  */
 public function getCurrentTranslation(?ConnectionInterface $con = null)
 {
