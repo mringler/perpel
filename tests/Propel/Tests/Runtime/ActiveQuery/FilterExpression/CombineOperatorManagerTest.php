@@ -118,4 +118,18 @@ class CombineOperatorManagerTest extends TestCase
         $manager->resetOperator();
         $this->assertSame(Criteria::LOGICAL_AND, $manager->getOperator());
     }
+
+    /**
+     * @return void
+     */
+    public function testGetLastPermanentOperator(): void
+    {
+        $manager = new CombineOperatorManager();
+        $manager->setOperator('My permanent operator', false);
+        $manager->setOperator('My one-time Operator', true);
+
+        $this->assertSame('My permanent operator', $manager->getCurrentPermanentOperator(), 'should ignore one-time operator');
+        $this->assertSame('My one-time Operator', $manager->getOperator(), 'should not interfere with one-time operator');
+        $this->assertSame('My permanent operator', $manager->getOperator(), 'should return to permanent operator');
+    }
 }

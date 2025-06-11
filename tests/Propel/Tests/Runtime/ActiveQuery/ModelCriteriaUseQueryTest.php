@@ -187,4 +187,27 @@ class ModelCriteriaUseQueryTest extends BookstoreTestBase
 
         $this->assertEquals($expectedSQL, $con->getLastExecutedQuery(), 'useQuery() and endUse() allow to merge a secondary criteria');
     }
+
+    /**
+     * @return void
+     */
+    public function testUseQueryInheritsPermanentOperator(): void
+    {
+        $params = [];
+        $sql = BookQuery::create()
+            ->combineFilters('OR')
+                ->filterByPrice(42)
+                ->useAuthorQuery()
+                    ->filterByAge(43)
+                    ->filterByFirstName('foo')
+                ->endUse()
+                ->filterByTitle('bar')
+            ->endCombineFilters()
+            ->filterByISBN('baz')
+            ->createSelectSql($params);
+
+        $expectedSQL = $this->getSql("SELECT  FROM book LEFT JOIN author ON (book.author_id=author.id) WHERE ((book.price=:p1 OR (author.age=:p2 OR author.first_name=:p3)) OR book.title=:p4) AND book.isbn=:p5");
+
+        $this->assertEquals($expectedSQL, $sql);
+    }
 }

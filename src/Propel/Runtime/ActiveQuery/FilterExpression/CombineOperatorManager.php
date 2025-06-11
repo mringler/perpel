@@ -45,6 +45,20 @@ class CombineOperatorManager
     }
 
     /**
+     * Get operator but ignore possible one-time operator.
+     *
+     * @return string
+     */
+    public function getCurrentPermanentOperator(): string
+    {
+        if (!$this->resetOperatorAfterUse) {
+            return $this->operator;
+        }
+
+        return end($this->usedOperatorStack) ?: Criteria::LOGICAL_AND;
+    }
+
+    /**
      * @param string $operator
      * @param bool $resetAfterUse
      *
