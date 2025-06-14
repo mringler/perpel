@@ -9,6 +9,7 @@
 namespace Propel\Generator\Builder\Om\ObjectBuilder\RelationCodeProducer;
 
 use Propel\Generator\Builder\Om\ObjectBuilder;
+use Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducerFactory;
 use Propel\Generator\Builder\Util\EntityObjectClassNames;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ForeignKey;
@@ -188,7 +189,7 @@ class FkRelationCodeProducer extends AbstractRelationCodeProducer
             $valueVarName = '$' . lcfirst($columnName);
 
             if ($rightValueOrColumn instanceof Column) {
-                $defaultValue = $this->objectBuilder->getDefaultValueString($column);
+                $defaultValue = ColumnCodeProducerFactory::create($column, $this->objectBuilder)->getDefaultValueString();
                 $getterIdentifier = $rightValueOrColumn->getPhpName();
                 $val = "{$varName}->get{$getterIdentifier}()";
             } else {

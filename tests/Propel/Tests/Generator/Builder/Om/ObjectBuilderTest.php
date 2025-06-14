@@ -9,6 +9,8 @@
 namespace Propel\Tests\Generator\Builder\Om;
 
 use Propel\Generator\Builder\Om\ObjectBuilder;
+use Propel\Generator\Builder\Om\ObjectBuilder\ColumnTypes\ColumnCodeProducerFactory;
+use Propel\Generator\Config\QuickGeneratorConfig;
 use Propel\Generator\Model\Column;
 use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Domain;
@@ -31,7 +33,8 @@ class ObjectBuilderTest extends TestCase
      */
     public function setUp(): void
     {
-        $builder = new TestableObjectBuilder(new Table('Foo'));
+        $builder = new ObjectBuilder(new Table('Foo'));
+        $builder->setGeneratorConfig(new QuickGeneratorConfig());
         $builder->setPlatform(new MysqlPlatform());
         $this->builder = $builder;
     }
@@ -63,9 +66,11 @@ class ObjectBuilderTest extends TestCase
      *
      * @return void
      */
-    public function testGetDefaultValueString($column, $value)
+    public function testGetDefaultValueString(Column $column, string $expectedDefaultValue)
     {
-        $this->assertEquals($value, $this->builder->getDefaultValueString($column));
+        $columnCodeProducer = ColumnCodeProducerFactory::create($column, $this->builder);
+        $defaultValueString = $columnCodeProducer->getDefaultValueString();
+        $this->assertEquals($expectedDefaultValue, $defaultValueString);
     }
 
     /**
@@ -74,13 +79,5 @@ class ObjectBuilderTest extends TestCase
     public function testGetDefaultKeyType()
     {
         $this->assertEquals('TYPE_PHPNAME', $this->builder->getDefaultKeyType());
-    }
-}
-
-class TestableObjectBuilder extends ObjectBuilder
-{
-    public function getDefaultValueString(Column $col): string
-    {
-        return parent::getDefaultValueString($col);
     }
 }

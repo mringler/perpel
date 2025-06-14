@@ -1091,7 +1091,7 @@ class Criteria
     /**
      * Adds 'ALL' modifier to the SQL statement.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function setAll()
     {
@@ -1104,7 +1104,7 @@ class Criteria
     /**
      * Adds 'DISTINCT' modifier to the SQL statement.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function setDistinct()
     {
@@ -1131,7 +1131,7 @@ class Criteria
      *
      * @param string $modifier The modifier to add
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function addSelectModifier(string $modifier)
     {
@@ -1149,7 +1149,7 @@ class Criteria
      *
      * @param string $modifier The modifier to add
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function removeSelectModifier(string $modifier)
     {
@@ -1184,7 +1184,7 @@ class Criteria
      * @param array<string> $tableNames
      * @param bool $noWait
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function lockForShare(array $tableNames = [], bool $noWait = false)
     {
@@ -1199,7 +1199,7 @@ class Criteria
      * @param array<string> $tableNames
      * @param bool $noWait
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function lockForUpdate(array $tableNames = [], bool $noWait = false)
     {
@@ -1218,7 +1218,7 @@ class Criteria
      * @param array<string> $tableNames
      * @param bool $noWait
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     protected function withLock(string $lockType, array $tableNames = [], bool $noWait = false)
     {
@@ -1230,7 +1230,7 @@ class Criteria
     /**
      * Retrieve rows without any read locking.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function withoutLock()
     {
@@ -1244,7 +1244,7 @@ class Criteria
      *
      * @param bool $b True if case should be ignored.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function setIgnoreCase(bool $b)
     {
@@ -1268,7 +1268,7 @@ class Criteria
      *
      * @param int $limit An int with the value for limit.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function setLimit(int $limit)
     {
@@ -1305,7 +1305,7 @@ class Criteria
      *
      * @param int $offset An int with the value for offset.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function setOffset(int $offset)
     {
@@ -1342,7 +1342,7 @@ class Criteria
      *
      * @param \Propel\Runtime\ActiveQuery\ColumnResolver\ColumnExpression\AbstractColumnExpression|string $name Name of the select column.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function addSelectColumn($name)
     {
@@ -1356,7 +1356,7 @@ class Criteria
      *
      * @param string $name Name of the select column.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function removeSelectColumn(string $name)
     {
@@ -1375,7 +1375,7 @@ class Criteria
      *
      * @param string|null $comment The comment to add to the query, without comment sign
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function setComment(?string $comment)
     {
@@ -1437,7 +1437,7 @@ class Criteria
     /**
      * Clears current select columns.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function clearSelectColumns()
     {
@@ -1489,7 +1489,7 @@ class Criteria
      *
      * @param string $name The name of the column to order by.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function addDescendingOrderByColumn(string $name)
     {
@@ -1511,7 +1511,7 @@ class Criteria
     /**
      * Clear the order-by columns.
      *
-     * @return $this Modified Criteria object (for fluent API)
+     * @return $this
      */
     public function clearOrderByColumns()
     {
